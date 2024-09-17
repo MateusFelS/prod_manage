@@ -36,13 +36,20 @@ DATABASE = {
     employeeId: 1
   },
 
+  operation: {
+    cutType: 'Shorts',
+    operationName: 'Shorts',
+    calculatedTime: '00:00:15'
+  },
+
   performance: {
     employeeId: 1,
     date: current_date,
     schedules: {
-      "07:00-08:00": 500,
-      "08:00-09:00": 600,
-      "09:10-10:10": 700
+      "piecesMade": 6300,
+      "target100": 9000,
+      "target70": 6300,
+      "efficiency": "Aceitável"
     },
     produced: 3000,
     meta: 3000,
