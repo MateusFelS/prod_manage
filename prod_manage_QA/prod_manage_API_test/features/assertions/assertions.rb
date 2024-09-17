@@ -5,4 +5,3 @@ class Assertions
         expect(message).to eql 'OK'
     end
     
-end
