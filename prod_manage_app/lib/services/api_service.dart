@@ -9,55 +9,75 @@ class ApiService {
 
   // Users API
   Future<List<dynamic>> fetchUsers() async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/users'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _processResponse(response);
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao buscar usuários: $e');
+    }
   }
 
   // CutRecords API
   Future<List<dynamic>> fetchCutRecords(int employeeId) async {
-    final response = await http
-        .get(Uri.parse('$_baseUrl/cut-records?employeeId=$employeeId'));
-    return _processResponse(response);
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/cut-records?employeeId=$employeeId'),
+      );
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao buscar registros de corte: $e');
+    }
   }
 
   Future<List<dynamic>> fetchAllCutRecords() async {
-    final response = await http.get(Uri.parse('$_baseUrl/cut-records'));
-    return _processResponse(response);
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/cut-records'));
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao buscar todos os registros de corte: $e');
+    }
   }
 
   Future<void> updateStatus(int cutId, String status) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl/cut-records/$cutId'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"status": status}),
-    );
-
-    if (response.statusCode == 200) {
-      print('Status atualizado com sucesso!');
-    } else {
-      print(
-          'Erro ao atualizar status: ${response.statusCode} - ${response.body}');
+    try {
+      final response = await http.patch(
+        Uri.parse('$_baseUrl/cut-records/$cutId'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"status": status}),
+      );
+      await _processVoidResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao atualizar status: $e');
     }
   }
 
   Future<Uint8List?> getImage(int cutId) async {
-    final response =
-        await http.get(Uri.parse('$_baseUrl/cut-records/$cutId/get-image'));
-    if (response.statusCode == 200) {
-      return response.bodyBytes;
-    } else {
-      print("Erro ao carregar a imagem do banco de dados");
-      return null;
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/cut-records/$cutId/get-image'),
+      );
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        throw Exception('Erro ao carregar a imagem');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar imagem: $e');
     }
   }
 
   Future<void> deleteCutRecord(int cutId) async {
-    final response =
-        await http.delete(Uri.parse('$_baseUrl/cut-records/$cutId'));
-    await _processVoidResponse(response);
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/cut-records/$cutId'),
+      );
+      await _processVoidResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao deletar registro de corte: $e');
+    }
   }
 
   Future<int> saveRegistroCorte(Map<String, dynamic> data) async {
@@ -67,7 +87,6 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(data),
       );
-
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         return responseData['id'];
@@ -94,28 +113,25 @@ class ApiService {
       );
 
       final response = await request.send();
-
       if (response.statusCode != 200) {
         throw Exception('Erro ao enviar imagem: ${response.reasonPhrase}');
       }
     } catch (e) {
-      throw Exception('Erro de conexão: $e');
+      throw Exception('Erro ao enviar imagem: $e');
     }
   }
 
   // Operations API
   Future<void> saveOperationRecord(Map<String, dynamic> data) async {
-    final url = Uri.parse('$_baseUrl/operations');
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(data),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Failed to save record');
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/operations'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      await _processVoidResponse(response, expectedStatusCode: 201);
+    } catch (e) {
+      throw Exception('Erro ao salvar registro de operação: $e');
     }
   }
 
@@ -126,13 +142,13 @@ class ApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
 
-        return data
-            .map((operationRecord) => {
-                  'id': operationRecord['id'],
-                  'operationName': operationRecord['operationName'],
-                  'calculatedTime': operationRecord['calculatedTime'],
-                })
-            .toList();
+        return data.map((operationRecord) {
+          return {
+            'id': operationRecord['id'],
+            'operationName': operationRecord['operationName'],
+            'calculatedTime': operationRecord['calculatedTime'],
+          };
+        }).toList();
       } else {
         throw Exception(
             'Erro ao buscar registros de operação: ${response.statusCode}');
@@ -144,26 +160,38 @@ class ApiService {
 
   // Performance API
   Future<List<dynamic>> fetchPerformanceData() async {
-    final response = await http.get(Uri.parse('$_baseUrl/performance'));
-    return _processResponse(response);
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/performance'));
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao buscar dados de desempenho: $e');
+    }
   }
 
   Future<void> savePerformance(Map<String, dynamic> data) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/performance'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
-    await _processVoidResponse(response, expectedStatusCode: 201);
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/performance'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      await _processVoidResponse(response, expectedStatusCode: 201);
+    } catch (e) {
+      throw Exception('Erro ao salvar dados de desempenho: $e');
+    }
   }
 
   // Employees API
   Future<List<dynamic>> fetchEmployees() async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/employees'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _processResponse(response);
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/employees'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      return _processResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao buscar funcionários: $e');
+    }
   }
 
   Future<http.Response?> postEmployee(Map<String, dynamic> data) async {
@@ -175,41 +203,56 @@ class ApiService {
       );
       return response;
     } catch (e) {
-      print("Erro de conexão: $e");
-      return null;
+      throw Exception('Erro ao adicionar funcionário: $e');
     }
   }
 
   Future<void> deleteEmployee(int id) async {
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/employees/$id'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    await _processVoidResponse(response);
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/employees/$id'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      await _processVoidResponse(response);
+    } catch (e) {
+      throw Exception('Erro ao deletar funcionário: $e');
+    }
   }
 
   // Roles API
-  Future<http.Response> postRole(Map<String, dynamic> data) {
-    return http.post(
-      Uri.parse('$_baseUrl/roles'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(data),
-    );
+  Future<http.Response?> postRole(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/roles'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 201) {
+        return response;
+      } else {
+        throw Exception(
+            'Erro ao criar cargo: ${response.statusCode} - ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Erro de conexão: $e');
+      return null;
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchRoles() async {
     final url = Uri.parse('$_baseUrl/roles');
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
 
     try {
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
+
+        // Converter cada item para Map<String, dynamic>
         return data.map((item) => item as Map<String, dynamic>).toList();
       } else {
         throw Exception('Falha na solicitação: ${response.reasonPhrase}');
@@ -221,13 +264,18 @@ class ApiService {
   }
 
   Future<String> fetchRoleTitle(int roleId) async {
-    final url = Uri.parse('$_baseUrl/roles/$roleId');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['title'];
-    } else {
-      throw Exception('Failed to load role title');
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/roles/$roleId'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['title'];
+      } else {
+        throw Exception('Erro ao carregar título do cargo');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar título do cargo: $e');
     }
   }
 
@@ -236,14 +284,15 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Erro ao conectar ao servidor.');
+      throw Exception('Erro na solicitação: ${response.statusCode}');
     }
   }
 
   Future<void> _processVoidResponse(http.Response response,
       {int expectedStatusCode = 200}) async {
     if (response.statusCode != expectedStatusCode) {
-      throw Exception('Erro ao processar a solicitação.');
+      throw Exception(
+          'Erro ao processar a solicitação: ${response.statusCode}');
     }
   }
 }

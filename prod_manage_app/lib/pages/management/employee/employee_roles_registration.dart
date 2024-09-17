@@ -27,13 +27,14 @@ class _EmployeeRoleRegistrationPageState
 
       final response = await _apiService.postRole(data);
 
-      if (response.statusCode == 201) {
+      if (response != null && response.statusCode == 201) {
         _showSnackBar('Função adicionada com sucesso!');
         _titleController.clear();
         _descriptionController.clear();
+      } else if (response != null) {
+        _showSnackBar('Erro ao adicionar função: ${response.reasonPhrase}');
       } else {
-        _showSnackBar(
-            'Erro ao adicionar função: ${response.reasonPhrase ?? 'Erro desconhecido'}');
+        _showSnackBar('Erro de conexão. Tente novamente mais tarde.');
       }
     } else {
       _showSnackBar('Por favor, preencha o campo do título da função.');

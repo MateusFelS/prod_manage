@@ -44,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Exibir diálogo de erro
   void _showErrorDialog(String message) {
     showDialog(
       context: context,

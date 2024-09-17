@@ -54,6 +54,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
       final response = await _apiService.postEmployee(data);
 
       if (response != null && response.statusCode == 201) {
+        Navigator.pop(context);
         _showSnackBar('Funcionário salvo com sucesso!');
       } else {
         _showSnackBar(
