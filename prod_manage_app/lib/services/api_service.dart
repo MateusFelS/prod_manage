@@ -119,6 +119,29 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchOperationRecords() async {
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/operations'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        return data
+            .map((operationRecord) => {
+                  'id': operationRecord['id'],
+                  'operationName': operationRecord['operationName'],
+                  'calculatedTime': operationRecord['calculatedTime'],
+                })
+            .toList();
+      } else {
+        throw Exception(
+            'Erro ao buscar registros de operação: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao buscar registros de operação: $e');
+    }
+  }
+
   // Performance API
   Future<List<dynamic>> fetchPerformanceData() async {
     final response = await http.get(Uri.parse('$_baseUrl/performance'));

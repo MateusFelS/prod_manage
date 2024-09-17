@@ -56,7 +56,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
 
   String _getRoleName(int roleId) {
     final role = _roles.firstWhere((r) => r['id'] == roleId,
-        orElse: () => {'name': 'Desconhecido'});
+        orElse: () => {'title': 'Desconhecido'});
     return role['title'];
   }
 

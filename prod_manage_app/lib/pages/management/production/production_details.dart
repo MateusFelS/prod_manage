@@ -19,12 +19,16 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   final ApiService _apiService = ApiService();
   String _currentStatus = '';
   Uint8List? _imageBuffer;
+  List<Map<String, dynamic>> _operationRecords = [];
+  Map<String, dynamic>? _selectedOperationRecord;
+  double _totalTime = 0.0;
 
   @override
   void initState() {
     super.initState();
     _currentStatus = widget.cut['status'];
     _loadImageFromDatabase();
+    _loadOperationRecords();
   }
 
   Future<void> _loadImageFromDatabase() async {
@@ -36,6 +40,42 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     } catch (e) {
       print("Erro ao carregar a imagem do banco de dados: $e");
     }
+  }
+
+  Future<void> _loadOperationRecords() async {
+    try {
+      final records = await _apiService.fetchOperationRecords();
+      setState(() {
+        _operationRecords = records;
+      });
+    } catch (e) {
+      print("Erro ao carregar os registros de operação: $e");
+    }
+  }
+
+  double _convertTimeStringToMinutes(String timeString) {
+    final parts = timeString.split(':');
+    if (parts.length != 3) return 0.0;
+
+    final hours = double.tryParse(parts[0]) ?? 0.0;
+    final minutes = double.tryParse(parts[1]) ?? 0.0;
+    final seconds = double.tryParse(parts[2]) ?? 0.0;
+
+    return hours * 60 + minutes + (seconds / 60);
+  }
+
+  void _onOperationRecordSelected(Map<String, dynamic>? record) {
+    setState(() {
+      _selectedOperationRecord = record;
+      if (record != null) {
+        final timeString = record['calculatedTime'] ?? '00:00:00';
+        final timeInMinutes = _convertTimeStringToMinutes(timeString);
+        final quantity = (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
+        _totalTime = timeInMinutes * quantity;
+      } else {
+        _totalTime = 0.0;
+      }
+    });
   }
 
   Future<void> _deleteCutRecord() async {
@@ -142,6 +182,8 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                       'Linha 2', widget.cut['line2'] ?? 'Nenhuma linha'),
                   _buildDetailRow('Comentário',
                       widget.cut['comment'] ?? 'Nenhum comentário'),
+                  _buildDetailRow('Quantidade de Peças',
+                      widget.cut['pieceAmount'].toString()),
                   _buildDetailRow(
                       'Data Limite', _formatDate(widget.cut['limiteDate'])),
                   SizedBox(height: 20),
@@ -156,6 +198,28 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                   _buildStatusSwitch('Pausado'),
                   _buildStatusSwitch('Adiado'),
                   _buildStatusSwitch('Finalizado'),
+                  SizedBox(height: 20),
+                  Text(
+                    'Registros de Operação:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade900,
+                    ),
+                  ),
+                  DropdownButton<Map<String, dynamic>>(
+                    value: _selectedOperationRecord,
+                    hint: Text('Selecione um registro'),
+                    onChanged: _onOperationRecordSelected,
+                    items: _operationRecords.map((record) {
+                      return DropdownMenuItem<Map<String, dynamic>>(
+                        value: record,
+                        child: Text('${record['operationName']}'),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 20),
+                  _buildDetailRow('Tempo Total Calculado',
+                      '${_totalTime.toStringAsFixed(2)} minutos'),
                   SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -247,7 +311,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   }
 
   String _formatDate(String date) {
-    final DateTime dateTime = DateTime.parse(date);
-    return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+    final DateTime parsedDate = DateTime.parse(date);
+    return '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
   }
 }
