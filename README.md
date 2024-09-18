@@ -30,11 +30,11 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
 
 3. **Monitoramento de Produção de Funcionários**
    - Registro de desempenho dos funcionários.
-   - Monitoramento de produção por hora, com cálculo de metas (100%, 80%, 70%).
+   - Monitoramento de produção por hora, com cálculo de metas "100% (ideal) e 70% (previsto)".
    - Destaque visual para a eficiência do funcionário (verde para produção ideal, vermelho para abaixo do esperado).
 
 4. **Relatórios de Desempenho**
-   - Geração de relatórios diários, semanais e mensais de produção e corte.
+   - Geração de relatórios semanal, quinzenal e mensal de produção e corte.
    - Visualização de histórico e desempenho dos funcionários.
 
 ## Tecnologias Utilizadas
@@ -43,7 +43,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
 - **Backend**: NestJS
 - **Banco de Dados**: Prisma (MySQL)
 - **Upload de Imagens**: Multer
-- **Testes**: Ruby Cucumber, HTTParty
+- **Testes**: Ruby Cucumber e HTTParty
 
 ## Instalação e Configuração
 
