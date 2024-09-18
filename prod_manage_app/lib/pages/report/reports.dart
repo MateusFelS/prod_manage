@@ -50,7 +50,17 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   void _processPerformanceData(List performances) {
-    int totalEmployees = 0;
+    Map<int, List<dynamic>> employeeGroupedPerformances = {};
+
+    for (var performance in performances) {
+      int employeeId = performance['employeeId'];
+      if (!employeeGroupedPerformances.containsKey(employeeId)) {
+        employeeGroupedPerformances[employeeId] = [];
+      }
+      employeeGroupedPerformances[employeeId]!.add(performance);
+    }
+
+    int totalEmployees = employeeGroupedPerformances.length;
     int aboveAverageCount = 0;
     int belowAverageCount = 0;
 
@@ -58,20 +68,29 @@ class _ReportsPageState extends State<ReportsPage> {
     int daysBack = _getDaysBackForPeriod(_selectedPeriod);
     DateTime startDate = now.subtract(Duration(days: daysBack));
 
-    List filteredPerformances = performances.where((performance) {
-      DateTime createdAt = DateTime.parse(performance['createdAt']);
-      return createdAt.isAfter(startDate);
-    }).toList();
+    employeeGroupedPerformances.forEach((employeeId, employeePerformances) {
+      List filteredPerformances = employeePerformances.where((performance) {
+        DateTime createdAt = DateTime.parse(performance['createdAt']);
+        return createdAt.isAfter(startDate);
+      }).toList();
 
-    totalEmployees = filteredPerformances.length;
+      int acceptableCount = 0;
+      int insufficientCount = 0;
 
-    for (var performance in filteredPerformances) {
-      if (performance['schedules']['efficiency'] == 'Aceitável') {
+      for (var performance in filteredPerformances) {
+        if (performance['schedules']['efficiency'] == 'Aceitável') {
+          acceptableCount++;
+        } else if (performance['schedules']['efficiency'] == 'Insuficiente') {
+          insufficientCount++;
+        }
+      }
+
+      if (acceptableCount > insufficientCount) {
         aboveAverageCount++;
-      } else if (performance['schedules']['efficiency'] == 'Insuficiente') {
+      } else {
         belowAverageCount++;
       }
-    }
+    });
 
     setState(() {
       _percentAcimaDaMedia =
@@ -81,7 +100,7 @@ class _ReportsPageState extends State<ReportsPage> {
     });
 
     if (_selectedEmployeeId != null) {
-      _processEmployeePerformance(filteredPerformances);
+      _processEmployeePerformance(performances);
     }
   }
 

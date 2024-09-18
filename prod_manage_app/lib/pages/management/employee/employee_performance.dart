@@ -64,7 +64,9 @@ class _PerformancePageState extends State<PerformancePage> {
     try {
       final records = await apiService.fetchCutRecords(widget.employee['id']);
       setState(() {
-        _cutRecords = records;
+        _cutRecords = records
+            .where((record) => record['employeeId'] == widget.employee['id'])
+            .toList();
       });
     } catch (e) {
       _showSnackBar('Erro: $e');
@@ -309,6 +311,7 @@ class TimingOptionsSheet extends StatefulWidget {
 class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
   String? selectedCut;
   int pieceAmount = 0;
+  String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -327,11 +330,15 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 16),
+
+          // Dropdown para selecionar o código de corte
           DropdownButtonFormField<String>(
             value: selectedCut,
             onChanged: (value) {
               setState(() {
                 selectedCut = value;
+                pieceAmount = widget.cutRecords.firstWhere(
+                    (record) => record['code'] == value)['pieceAmount'];
               });
             },
             items: widget.cutRecords.map((record) {
@@ -343,16 +350,28 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             decoration: _inputDecoration('Selecione o Código de Corte'),
           ),
           SizedBox(height: 10),
+
+          // Campo de quantidade de peças com dica de máximo
           TextFormField(
             keyboardType: TextInputType.number,
-            decoration: _inputDecoration('Quantidade de Peças'),
+            decoration:
+                _inputDecoration('Quantidade de Peças (max: $pieceAmount)')
+                    .copyWith(
+              errorText: errorMessage,
+            ),
             onChanged: (value) {
               setState(() {
-                pieceAmount = int.tryParse(value) ?? 0;
+                int enteredValue = int.tryParse(value) ?? 0;
+                if (enteredValue < 1 || enteredValue > pieceAmount) {
+                  errorMessage = 'Quantidade deve ser entre 1 e $pieceAmount';
+                } else {
+                  errorMessage = null;
+                }
               });
             },
           ),
           SizedBox(height: 10),
+
           ElevatedButton(
             onPressed: () {
               if (selectedCut != null && pieceAmount > 0) {
@@ -361,7 +380,18 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
               }
             },
             child: Text('Iniciar Cronômetro'),
-            style: _buttonStyle(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.brown.shade400,
+              foregroundColor: Colors.white,
+              textStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              fixedSize: Size(MediaQuery.of(context).size.width * .8, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
         ],
       ),
@@ -377,20 +407,6 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
       ),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.brown.shade800),
-      ),
-    );
-  }
-
-  ButtonStyle _buttonStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: Colors.brown.shade400,
-      foregroundColor: Colors.brown.shade50,
-      textStyle: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
       ),
     );
   }

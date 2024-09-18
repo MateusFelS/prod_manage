@@ -117,7 +117,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
                                     _deleteEmployee(employee['id']);
                                   },
                                 ),
-                                Icon(Icons.arrow_forward,
+                                Icon(Icons.arrow_forward_ios,
                                     color: Colors.brown.shade800),
                               ],
                             ),

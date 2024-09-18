@@ -95,16 +95,22 @@ class _ProductionRegistrationPageState
         );
 
         if (_imageFile != null) {
-          await _apiService.uploadImage(cutRecordId, _imageFile!);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Imagem enviada com sucesso!')),
-          );
+          try {
+            await _apiService.uploadImage(cutRecordId, _imageFile!);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Imagem enviada com sucesso!')),
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erro ao enviar imagem: $e')),
+            );
+          }
         }
 
         Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('Erro ao salvar registro: $e')),
         );
       }
     } else {

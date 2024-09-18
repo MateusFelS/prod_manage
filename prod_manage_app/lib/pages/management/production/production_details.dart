@@ -81,7 +81,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   Future<void> _deleteCutRecord() async {
     try {
       await _apiService.deleteCutRecord(widget.cut['id']);
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       _showSnackBar('Registro excluído com sucesso!');
     } catch (e) {
       _showSnackBar('Erro ao excluir o registro: $e');
