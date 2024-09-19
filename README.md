@@ -51,7 +51,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/MateusFels/prod_manage-backend.git
+   git clone https://github.com/MateusFels/prod_manage_backend.git
    cd prod_manage-backend
 
 2. Instale as dependências:
