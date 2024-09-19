@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param } from "@nestjs/common";
 import { PerformanceService } from "./performance.service";
 import { Performance } from "@prisma/client";
 
@@ -16,4 +16,8 @@ export class PerformanceController{
         return this.performanceService.getAllPerformances();
     }
 
+    @Get(':id')
+    async getPerformanceById(@Param('id') id: string) {
+        return this.performanceService.getPerformanceById(Number(id));
+    }
 }

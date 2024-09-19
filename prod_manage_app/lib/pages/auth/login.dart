@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:prod_manage/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -32,6 +33,9 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (user != null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         _showErrorDialog('Token ou senha incorretos.');

@@ -42,6 +42,58 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
     }
   }
 
+  void _confirmDeleteEmployee(int id) async {
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Confirmar exclusão',
+            style: TextStyle(color: Colors.brown.shade800),
+          ),
+          content: Text(
+            'Você tem certeza que deseja excluir este funcionário?',
+            style: TextStyle(color: Colors.brown.shade800),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.brown.shade800),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            Container(
+              width: 100,
+              height: 40,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10), color: Colors.red),
+              child: TextButton(
+                child: Text('Excluir', style: TextStyle(color: Colors.white)),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                  _deleteEmployee(id);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        await _apiService.deleteCutRecord(id);
+        _showSnackBar('Registro de corte excluído com sucesso.');
+        _fetchEmployees();
+      } catch (e) {
+        _showSnackBar('Erro ao excluir o registro de corte: $e');
+      }
+    }
+  }
+
   Future<void> _deleteEmployee(int id) async {
     try {
       await _apiService.deleteEmployee(id);
@@ -114,7 +166,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
                                 IconButton(
                                   icon: Icon(Icons.delete, color: Colors.red),
                                   onPressed: () {
-                                    _deleteEmployee(employee['id']);
+                                    _confirmDeleteEmployee(employee['id']);
                                   },
                                 ),
                                 Icon(Icons.arrow_forward_ios,

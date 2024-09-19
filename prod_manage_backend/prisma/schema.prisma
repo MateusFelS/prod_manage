@@ -21,15 +21,16 @@ model CutRecord {
   line1        String
   line2        String
   limiteDate   DateTime
-  comment      String?  // Campo opcional para comentários
+  comment      String?  
   supplier     String
   status       String   @default("in progress")  // Status padrão
-  image        Bytes?   // Campo opcional para imagens
-  createdAt    DateTime @default(now())  // Data de criação automática
-  updatedAt    DateTime @default(now()) @updatedAt  // Data de atualização automática
-  employeeId   Int
-  employee     Employee @relation("EmployeeCutRecords", fields: [employeeId], references: [id])
+  image        Bytes?  
+  createdAt    DateTime @default(now())  
+  updatedAt    DateTime @default(now()) @updatedAt  
+  employeeId   Int?     
+  employee     Employee? @relation("EmployeeCutRecords", fields: [employeeId], references: [id], onDelete: SetNull)
 }
+
 
 model OperationRecord {
   id             Int      @id @default(autoincrement())
@@ -47,8 +48,7 @@ model Employee {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
   cutRecords   CutRecord[] @relation("EmployeeCutRecords")
-  performances Performance[]
-  reports      Report[]    @relation("EmployeeReports")
+  performances Performance[] 
   role         Role       @relation(fields: [roleId], references: [id])
 }
 
@@ -69,12 +69,5 @@ model Performance {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-}
-
-model Report {
-  id         Int      @id @default(autoincrement())
-  reportData String
-  employeeId Int
-  employee   Employee @relation(fields: [employeeId], references: [id], name: "EmployeeReports")
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }

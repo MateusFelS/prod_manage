@@ -19,4 +19,11 @@ export class PerformanceService{
       return this.prisma.performance.findMany();
     }
 
+    async getPerformanceById(id: number): Promise<Performance>{
+      return this.prisma.performance.findUnique({
+          where: {
+              id
+          }
+      });
+    }
 }

@@ -232,7 +232,9 @@ class _PerformancePageState extends State<PerformancePage> {
             TimerControls(
               isTiming: isTiming,
               elapsedTime: _formatTime(stopwatch.elapsed),
-              onStart: _showTimingOptions,
+              onStart: currentRow < timeSlots.length
+                  ? _showTimingOptions
+                  : null, // Desativa o botão se já tiver cronômetro para todos os horários
               onStop: _stopTiming,
             ),
             SizedBox(height: 10),
@@ -330,15 +332,11 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 16),
-
-          // Dropdown para selecionar o código de corte
           DropdownButtonFormField<String>(
             value: selectedCut,
             onChanged: (value) {
               setState(() {
                 selectedCut = value;
-                pieceAmount = widget.cutRecords.firstWhere(
-                    (record) => record['code'] == value)['pieceAmount'];
               });
             },
             items: widget.cutRecords.map((record) {
@@ -350,8 +348,6 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             decoration: _inputDecoration('Selecione o Código de Corte'),
           ),
           SizedBox(height: 10),
-
-          // Campo de quantidade de peças com dica de máximo
           TextFormField(
             keyboardType: TextInputType.number,
             decoration:
@@ -362,16 +358,28 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             onChanged: (value) {
               setState(() {
                 int enteredValue = int.tryParse(value) ?? 0;
-                if (enteredValue < 1 || enteredValue > pieceAmount) {
-                  errorMessage = 'Quantidade deve ser entre 1 e $pieceAmount';
+
+                var selectedRecord = widget.cutRecords.firstWhere(
+                  (record) => record['code'] == selectedCut,
+                  orElse: () => null,
+                );
+
+                if (selectedRecord != null) {
+                  int maxPieces = selectedRecord['pieceAmount'];
+
+                  if (enteredValue < 1 || enteredValue > maxPieces) {
+                    errorMessage = 'Quantidade deve ser entre 1 e $maxPieces';
+                  } else {
+                    errorMessage = null;
+                    pieceAmount = enteredValue;
+                  }
                 } else {
-                  errorMessage = null;
+                  errorMessage = 'Nenhum corte selecionado ou código inválido.';
                 }
               });
             },
           ),
           SizedBox(height: 10),
-
           ElevatedButton(
             onPressed: () {
               if (selectedCut != null && pieceAmount > 0) {

@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       title: 'ProdManage',
-      initialRoute: '/home',
+      initialRoute: '/',
       routes: {
         '/': (context) => SplashScreen(),
         '/login': (context) => LoginPage(),

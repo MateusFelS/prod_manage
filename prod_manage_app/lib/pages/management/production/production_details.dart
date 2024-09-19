@@ -78,16 +78,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     });
   }
 
-  Future<void> _deleteCutRecord() async {
-    try {
-      await _apiService.deleteCutRecord(widget.cut['id']);
-      Navigator.of(context).pop(true);
-      _showSnackBar('Registro excluído com sucesso!');
-    } catch (e) {
-      _showSnackBar('Erro ao excluir o registro: $e');
-    }
-  }
-
   Future<void> _updateStatus() async {
     try {
       await _apiService.updateStatus(widget.cut['id'], _currentStatus);
@@ -101,47 +91,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
-    );
-  }
-
-  Future<void> _confirmDelete() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirmar Exclusão'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Você tem certeza que deseja excluir este registro?'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.brown.shade800),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _deleteCutRecord();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade400,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('Confirmar'),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -221,28 +170,22 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                   _buildDetailRow('Tempo Total Calculado',
                       '${_totalTime.toStringAsFixed(2)} minutos'),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _confirmDelete();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade400,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text('Excluir'),
+                  ElevatedButton(
+                    onPressed: _updateStatus,
+                    child: Text('Atualizar Status'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.brown.shade400,
+                      foregroundColor: Colors.white,
+                      textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                      ElevatedButton(
-                        onPressed: _updateStatus,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade800,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text('Atualizar Status'),
+                      fixedSize:
+                          Size(MediaQuery.of(context).size.width * .8, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

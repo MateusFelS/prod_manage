@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus(); // Verifica o status de login ao inicializar
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    // Aguarda 2 segundos para simular uma animação de splash antes de redirecionar
+    await Future.delayed(Duration(seconds: 2));
+
+    // Redireciona com base no estado de login
+    if (isLoggedIn) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,25 +74,10 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10),
-              Container(
-                width: MediaQuery.of(context).size.width * .8,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/login'),
-                  child: Text('Avançar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown.shade800,
-                    foregroundColor: Colors.brown.shade100,
-                    textStyle: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
+              CircularProgressIndicator(
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(Colors.brown.shade800),
+              ), // Indicador de progresso enquanto verifica o estado de login
             ],
           ),
         ],

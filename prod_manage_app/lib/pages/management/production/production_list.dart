@@ -42,6 +42,55 @@ class _ProductionListPageState extends State<ProductionListPage> {
         .toList();
   }
 
+  Future<void> _confirmDeleteCut(int cutId) async {
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Confirmar exclusão',
+          style: TextStyle(color: Colors.brown.shade800),
+        ),
+        content: Text(
+          'Você tem certeza que deseja excluir este corte?',
+          style: TextStyle(color: Colors.brown.shade800),
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.brown.shade800),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop(false);
+            },
+          ),
+          Container(
+            width: 100,
+            height: 40,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10), color: Colors.red),
+            child: TextButton(
+              child: Text('Excluir', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _apiService.deleteCutRecord(cutId);
+        _showSnackBar('Registro de corte excluído com sucesso.');
+        _fetchCutRecords();
+      } catch (e) {
+        _showSnackBar('Erro ao excluir o registro de corte: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +178,18 @@ class _ProductionListPageState extends State<ProductionListPage> {
           'Status: ${cut['status']}',
           style: TextStyle(color: Colors.black87),
         ),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                _confirmDeleteCut(cut['id']);
+              },
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
+          ],
+        ),
         onTap: () async {
           final bool? updated = await Navigator.push(
             context,

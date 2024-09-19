@@ -145,13 +145,25 @@ class _ReportsPageState extends State<ReportsPage> {
 
   List<FlSpot> _buildLineChartSpots() {
     List<FlSpot> spots = [];
-    List<String> dates = _employeePerformance.keys.toList();
-    dates.sort();
+
+    // Converta as chaves de _employeePerformance para DateTime
+    List<DateTime> dates = _employeePerformance.keys
+        .map((dateString) => DateTime.parse(dateString))
+        .toList();
+
+    // Ordena a lista de datas
+    dates.sort((a, b) => a.compareTo(b));
+
+    // Cria os pontos do gráfico (spots) na ordem crescente das datas
     for (int i = 0; i < dates.length; i++) {
-      DateTime date = DateTime.parse(dates[i]);
-      double value = _employeePerformance[dates[i]]!.toDouble();
+      DateTime date = dates[i];
+      String formattedDate =
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      double value = _employeePerformance[formattedDate]!.toDouble();
       spots.add(FlSpot(i.toDouble(), value));
     }
+
     return spots;
   }
 
@@ -178,9 +190,13 @@ class _ReportsPageState extends State<ReportsPage> {
                   interval: 1,
                   getTitlesWidget: (value, meta) {
                     int index = value.toInt();
-                    var dates = _employeePerformance.keys.toList();
-                    if (index >= 0 && index < dates.length) {
-                      var date = DateTime.parse(dates[index]);
+                    List<DateTime> sortedDates = _employeePerformance.keys
+                        .map((dateString) => DateTime.parse(dateString))
+                        .toList();
+                    sortedDates.sort((a, b) => a.compareTo(b));
+
+                    if (index >= 0 && index < sortedDates.length) {
+                      var date = sortedDates[index];
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
