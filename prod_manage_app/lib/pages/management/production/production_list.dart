@@ -20,13 +20,23 @@ class _ProductionListPageState extends State<ProductionListPage> {
   }
 
   Future<void> _fetchCutRecords() async {
+    await _fetchData(
+      fetchMethod: _apiService.fetchAllCutRecords,
+      onSuccess: (records) => setState(() => _cutRecords = records),
+      errorMessage: 'Erro ao buscar os registros de corte',
+    );
+  }
+
+  Future<void> _fetchData({
+    required Future<List<dynamic>> Function() fetchMethod,
+    required Function(List<dynamic>) onSuccess,
+    required String errorMessage,
+  }) async {
     try {
-      final records = await _apiService.fetchAllCutRecords();
-      setState(() {
-        _cutRecords = records;
-      });
+      final data = await fetchMethod();
+      onSuccess(data);
     } catch (e) {
-      _showSnackBar('Erro ao buscar os registros de corte: $e');
+      _showSnackBar('$errorMessage: $e');
     }
   }
 
@@ -43,7 +53,15 @@ class _ProductionListPageState extends State<ProductionListPage> {
   }
 
   Future<void> _confirmDeleteCut(int cutId) async {
-    bool? confirm = await showDialog(
+    bool? confirm = await _showDeleteDialog();
+
+    if (confirm == true) {
+      await _deleteCutRecord(cutId);
+    }
+  }
+
+  Future<bool?> _showDeleteDialog() {
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
@@ -60,34 +78,25 @@ class _ProductionListPageState extends State<ProductionListPage> {
               'Cancelar',
               style: TextStyle(color: Colors.brown.shade800),
             ),
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
+            onPressed: () => Navigator.of(context).pop(false),
           ),
-          Container(
-            width: 100,
-            height: 40,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10), color: Colors.red),
-            child: TextButton(
-              child: Text('Excluir', style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
+          TextButton(
+            style: TextButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Excluir', style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
       ),
     );
+  }
 
-    if (confirm == true) {
-      try {
-        await _apiService.deleteCutRecord(cutId);
-        _showSnackBar('Registro de corte excluído com sucesso.');
-        _fetchCutRecords();
-      } catch (e) {
-        _showSnackBar('Erro ao excluir o registro de corte: $e');
-      }
+  Future<void> _deleteCutRecord(int cutId) async {
+    try {
+      await _apiService.deleteCutRecord(cutId);
+      _showSnackBar('Registro de corte excluído com sucesso.');
+      _fetchCutRecords();
+    } catch (e) {
+      _showSnackBar('Erro ao excluir o registro de corte: $e');
     }
   }
 
@@ -120,20 +129,20 @@ class _ProductionListPageState extends State<ProductionListPage> {
   }
 
   Widget _buildFilterRow() {
+    final statuses = ['Em progresso', 'Pausado', 'Adiado', 'Finalizado'];
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: [
-            _buildFilterButton('Em progresso'),
-            SizedBox(width: 8),
-            _buildFilterButton('Pausado'),
-            SizedBox(width: 8),
-            _buildFilterButton('Adiado'),
-            SizedBox(width: 8),
-            _buildFilterButton('Finalizado'),
-          ],
+          children: statuses
+              .map((status) => [
+                    _buildFilterButton(status),
+                    SizedBox(width: 5),
+                  ])
+              .expand((widget) => widget)
+              .toList()
+            ..removeLast(),
         ),
       ),
     );

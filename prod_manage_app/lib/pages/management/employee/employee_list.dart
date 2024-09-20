@@ -21,77 +21,68 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   }
 
   Future<void> _fetchRoles() async {
-    try {
-      final roles = await _apiService.fetchRoles();
-      setState(() {
-        _roles = roles;
-      });
-    } catch (e) {
-      _showSnackBar('Erro ao carregar funções: $e');
-    }
+    await _fetchData(
+      fetchMethod: _apiService.fetchRoles,
+      onSuccess: (roles) =>
+          setState(() => _roles = List<Map<String, dynamic>>.from(roles)),
+      errorMessage: 'Erro ao carregar funções',
+    );
   }
 
   Future<void> _fetchEmployees() async {
+    await _fetchData(
+      fetchMethod: _apiService.fetchEmployees,
+      onSuccess: (employees) => setState(
+          () => _employees = List<Map<String, dynamic>>.from(employees)),
+      errorMessage: 'Erro ao carregar a lista de empregados',
+    );
+  }
+
+  Future<void> _fetchData({
+    required Future<List<dynamic>> Function() fetchMethod,
+    required Function(List<dynamic>) onSuccess,
+    required String errorMessage,
+  }) async {
     try {
-      final employees = await _apiService.fetchEmployees();
-      setState(() {
-        _employees = employees;
-      });
+      final data = await fetchMethod();
+      onSuccess(data);
     } catch (e) {
-      _showSnackBar('Erro ao carregar a lista de empregados: $e');
+      _showSnackBar('$errorMessage: $e');
     }
   }
 
   void _confirmDeleteEmployee(int id) async {
-    bool? confirm = await showDialog(
+    bool? confirm = await _showDeleteConfirmationDialog();
+
+    if (confirm == true) {
+      await _deleteEmployee(id);
+    }
+  }
+
+  Future<bool?> _showDeleteConfirmationDialog() {
+    return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            'Confirmar exclusão',
-            style: TextStyle(color: Colors.brown.shade800),
-          ),
-          content: Text(
-            'Você tem certeza que deseja excluir este funcionário?',
-            style: TextStyle(color: Colors.brown.shade800),
-          ),
+          title: Text('Confirmar exclusão',
+              style: TextStyle(color: Colors.brown.shade800)),
+          content: Text('Você tem certeza que deseja excluir este funcionário?',
+              style: TextStyle(color: Colors.brown.shade800)),
           actions: [
             TextButton(
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.brown.shade800),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
+              child: Text('Cancelar',
+                  style: TextStyle(color: Colors.brown.shade800)),
+              onPressed: () => Navigator.of(context).pop(false),
             ),
-            Container(
-              width: 100,
-              height: 40,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10), color: Colors.red),
-              child: TextButton(
-                child: Text('Excluir', style: TextStyle(color: Colors.white)),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                  _deleteEmployee(id);
-                },
-              ),
+            TextButton(
+              child: Text('Excluir', style: TextStyle(color: Colors.white)),
+              style: TextButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.of(context).pop(true),
             ),
           ],
         );
       },
     );
-
-    if (confirm == true) {
-      try {
-        await _apiService.deleteCutRecord(id);
-        _showSnackBar('Registro de corte excluído com sucesso.');
-        _fetchEmployees();
-      } catch (e) {
-        _showSnackBar('Erro ao excluir o registro de corte: $e');
-      }
-    }
   }
 
   Future<void> _deleteEmployee(int id) async {
@@ -107,15 +98,13 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   }
 
   String _getRoleName(int roleId) {
-    final role = _roles.firstWhere((r) => r['id'] == roleId,
-        orElse: () => {'title': 'Desconhecido'});
-    return role['title'];
+    return _roles.firstWhere((r) => r['id'] == roleId,
+        orElse: () => {'title': 'Desconhecido'})['title'];
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -129,67 +118,85 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Funcionários Registrados',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown.shade900,
-                    ),
-                  ),
+                  Text('Funcionários Registrados',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown.shade900)),
                   SizedBox(height: 10.0),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _employees.length,
-                      itemBuilder: (context, index) {
-                        final employee = _employees[index];
-                        return Card(
-                          color: Colors.brown.shade100,
-                          elevation: 4.0,
-                          margin: EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 16.0),
-                          child: ListTile(
-                            title: Text(
-                              employee['name'],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.brown.shade900,
-                              ),
-                            ),
-                            subtitle: Text(
-                              _getRoleName(employee['roleId']),
-                              style: TextStyle(color: Colors.black54),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    _confirmDeleteEmployee(employee['id']);
-                                  },
-                                ),
-                                Icon(Icons.arrow_forward_ios,
-                                    color: Colors.brown.shade800),
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PerformancePage(employee: employee),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  Expanded(child: _buildEmployeeList()),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildEmployeeList() {
+    return ListView.builder(
+      itemCount: _employees.length,
+      itemBuilder: (context, index) {
+        final employee = _employees[index];
+        return _buildEmployeeCard(employee);
+      },
+    );
+  }
+
+  Widget _buildEmployeeCard(dynamic employee) {
+    return Card(
+      color: Colors.brown.shade100,
+      elevation: 4.0,
+      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.all(16.0),
+        title: Text(
+          employee['name'],
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.brown.shade900,
+          ),
+        ),
+        subtitle: Text(
+          _getRoleName(employee['roleId']),
+          style: TextStyle(color: Colors.black87),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                _confirmDeleteEmployee(employee['id']);
+              },
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
+          ],
+        ),
+        onTap: () => _navigateToPerformancePage(employee),
+      ),
+    );
+  }
+
+  Widget _buildTrailingIcons(int employeeId) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _confirmDeleteEmployee(employeeId),
+        ),
+        Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
+      ],
+    );
+  }
+
+  void _navigateToPerformancePage(dynamic employee) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => PerformancePage(employee: employee)),
     );
   }
 }

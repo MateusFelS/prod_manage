@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Prod Manage'),
+      appBar: CustomAppBar(
+        title: 'Prod Manage',
+        actionButton: IconButton(
+          icon: Icon(
+            Icons.logout,
+            size: 20,
+          ),
+          onPressed: () => _logout(context),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),

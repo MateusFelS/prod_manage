@@ -26,4 +26,13 @@ export class PerformanceService{
           }
       });
     }
+
+    async updatePerformance(id: number, data: Performance): Promise<Performance> {
+      return this.prisma.performance.update({
+        where: {
+          id,
+        },
+        data
+      });
+    }
 }

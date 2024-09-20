@@ -12,17 +12,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus(); // Verifica o status de login ao inicializar
+    _checkLoginStatus();
   }
 
   Future<void> _checkLoginStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-    // Aguarda 2 segundos para simular uma animação de splash antes de redirecionar
     await Future.delayed(Duration(seconds: 2));
 
-    // Redireciona com base no estado de login
     if (isLoggedIn) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
@@ -38,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.brown.shade300, Colors.brown.shade100],
+                colors: [Colors.brown.shade200, Colors.brown.shade100],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -77,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
               CircularProgressIndicator(
                 valueColor:
                     AlwaysStoppedAnimation<Color>(Colors.brown.shade800),
-              ), // Indicador de progresso enquanto verifica o estado de login
+              ),
             ],
           ),
         ],

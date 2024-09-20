@@ -23,7 +23,7 @@ model CutRecord {
   limiteDate   DateTime
   comment      String?  
   supplier     String
-  status       String   @default("in progress")  // Status padrão
+  status       String   @default("in progress") 
   image        Bytes?  
   createdAt    DateTime @default(now())  
   updatedAt    DateTime @default(now()) @updatedAt  
@@ -34,10 +34,10 @@ model CutRecord {
 
 model OperationRecord {
   id             Int      @id @default(autoincrement())
-  cutType        String   // Tipo de corte
-  operationName  String   // Nome da operação
-  calculatedTime String   // Tempo calculado (formato HH:MM:SS)
-  createdAt      DateTime @default(now())  // Data de criação automática
+  cutType        String   
+  operationName  String   
+  calculatedTime String  
+  createdAt      DateTime @default(now())  
 }
 
 model Employee {
@@ -54,18 +54,19 @@ model Employee {
 
 model Role {
   id           Int         @id @default(autoincrement())
-  title        String      @unique  // Nome da função ou cargo
-  description  String?     // Descrição opcional da função
-  employees    Employee[]  // Lista de funcionários com essa função
+  title        String      @unique  
+  description  String?     
+  employees    Employee[]  
 }
 
 model Performance {
   id          Int       @id @default(autoincrement())
   employeeId  Int
   date        DateTime  
-  schedules   Json      // Armazena os horários em formato JSON
+  schedules   Json      
   produced    Int
   meta        Int
+  isCompleted Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

@@ -4,6 +4,7 @@ import 'package:prod_manage/widgets/app_bar.dart';
 import 'package:prod_manage/widgets/performance_table.dart';
 import 'package:prod_manage/widgets/timer_controls.dart';
 import 'package:prod_manage/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PerformancePage extends StatefulWidget {
   final Map<String, dynamic> employee;
@@ -50,12 +51,14 @@ class _PerformancePageState extends State<PerformancePage> {
   @override
   void initState() {
     super.initState();
+    _loadPerformanceData();
     _fetchCutRecords();
     _fetchRoleTitle();
   }
 
   @override
   void dispose() {
+    _savePerformanceData();
     timer?.cancel();
     super.dispose();
   }
@@ -84,21 +87,39 @@ class _PerformancePageState extends State<PerformancePage> {
     }
   }
 
-  Future<void> _saveAllPerformance() async {
-    final totalData = _calculateTotalPerformance();
-    final data = {
-      'employeeId': widget.employee['id'],
-      'date': DateTime.now().toIso8601String(),
-      'schedules': totalData,
-      'produced': totalData['piecesMade'],
-      'meta': totalData['target70'],
-    };
+  Future<void> _savePerformanceData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    try {
-      await apiService.savePerformance(data);
-      _showSnackBar('Rendimento salvo com sucesso');
-    } catch (e) {
-      _showSnackBar('Erro ao salvar rendimento: $e');
+    // Salva a currentRow
+    await prefs.setInt('currentRow_${widget.employee['id']}', currentRow);
+
+    // Salva os dados da performance
+    for (int i = 0; i < performanceData.length; i++) {
+      await prefs.setString(
+          'performance_${widget.employee['id']}_$i',
+          performanceData[i]['100%']! +
+              ',' +
+              performanceData[i]['70%']! +
+              ',' +
+              performanceData[i]['Rendimento']!);
+    }
+  }
+
+  Future<void> _loadPerformanceData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Carrega a currentRow
+    currentRow = prefs.getInt('currentRow_${widget.employee['id']}') ?? 0;
+
+    // Carrega os dados da performance
+    for (int i = 0; i < performanceData.length; i++) {
+      String? data = prefs.getString('performance_${widget.employee['id']}_$i');
+      if (data != null) {
+        List<String> values = data.split(',');
+        performanceData[i]['100%'] = values[0];
+        performanceData[i]['70%'] = values[1];
+        performanceData[i]['Rendimento'] = values[2];
+      }
     }
   }
 
@@ -161,8 +182,79 @@ class _PerformancePageState extends State<PerformancePage> {
 
         currentRow++;
       }
+
       stopwatch.reset();
     });
+  }
+
+  Future<void> _saveAllPerformance() async {
+    final totalData = _calculateTotalPerformance();
+    final data = {
+      'employeeId': widget.employee['id'],
+      'date': DateTime.now().toIso8601String(),
+      'schedules': totalData,
+      'produced': totalData['piecesMade'],
+      'meta': totalData['target70'],
+    };
+
+    try {
+      await apiService.savePerformance(data);
+      _showSnackBar('Rendimento salvo com sucesso');
+    } catch (e) {
+      _showSnackBar('Erro ao salvar rendimento: $e');
+    }
+  }
+
+  Future<void> _clearSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('currentRow_${widget.employee['id']}');
+
+    for (int i = 0; i < performanceData.length; i++) {
+      await prefs.remove('performance_${widget.employee['id']}_$i');
+    }
+    setState(() {
+      currentRow = 0;
+      performanceData = List.generate(
+          8,
+          (index) => {
+                '100%': 'N/A',
+                '70%': 'N/A',
+                'Rendimento': 'N/A',
+              });
+    });
+    _showSnackBar('Dados de performance limpos com sucesso');
+  }
+
+  void _confirmClearData() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmação',
+              style: TextStyle(color: Colors.brown.shade800)),
+          content: Text('Tem certeza que deseja limpar os dados?',
+              style: TextStyle(color: Colors.brown.shade800)),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar',
+                  style: TextStyle(color: Colors.brown.shade800)),
+            ),
+            TextButton(
+              onPressed: () {
+                _clearSharedPreferences();
+                Navigator.of(context).pop();
+              },
+              child: Text('Limpar', style: TextStyle(color: Colors.white)),
+              style: TextButton.styleFrom(backgroundColor: Colors.red),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _calculateRendimento(int rendimento, int avgTarget70) {
@@ -211,7 +303,13 @@ class _PerformancePageState extends State<PerformancePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Rendimento de ${widget.employee['name']}'),
+      appBar: CustomAppBar(
+        title: 'Rendimento de ${widget.employee['name']}',
+        actionButton: IconButton(
+          icon: Icon(Icons.clear),
+          onPressed: _confirmClearData,
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -232,9 +330,8 @@ class _PerformancePageState extends State<PerformancePage> {
             TimerControls(
               isTiming: isTiming,
               elapsedTime: _formatTime(stopwatch.elapsed),
-              onStart: currentRow < timeSlots.length
-                  ? _showTimingOptions
-                  : null, // Desativa o botão se já tiver cronômetro para todos os horários
+              onStart:
+                  currentRow < timeSlots.length ? _showTimingOptions : null,
               onStop: _stopTiming,
             ),
             SizedBox(height: 10),
@@ -246,19 +343,15 @@ class _PerformancePageState extends State<PerformancePage> {
   }
 
   Widget _buildEmployeeInfo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.employee['name'],
-          style:
-              _employeeTextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+          'Funcionário: ${widget.employee['name']}',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        SizedBox(width: 5),
-        Text(
-          _roleTitle != null ? "(${_roleTitle!})" : "(Carregando...)",
-          style: _employeeTextStyle(fontSize: 20),
-        ),
+        SizedBox(height: 8.0),
+        Text('Cargo: ${_roleTitle ?? 'Carregando...'}'),
       ],
     );
   }
@@ -277,12 +370,28 @@ class _PerformancePageState extends State<PerformancePage> {
         width: MediaQuery.of(context).size.width * .8,
         height: 50,
         child: ElevatedButton(
-          onPressed: _saveAllPerformance,
+          onPressed: _checkAndSavePerformanceData,
           child: Text('Salvar Rendimento'),
           style: _buttonStyle(),
         ),
       ),
     );
+  }
+
+  void _checkAndSavePerformanceData() async {
+    bool isComplete = performanceData.every((data) =>
+        data['100%'] != 'N/A' &&
+        data['70%'] != 'N/A' &&
+        data['Rendimento'] != 'N/A');
+
+    if (isComplete) {
+      await _saveAllPerformance();
+      await _clearSharedPreferences();
+
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      _showSnackBar('Complete a tabela antes de Salvar');
+    }
   }
 
   ButtonStyle _buttonStyle() {
@@ -313,6 +422,7 @@ class TimingOptionsSheet extends StatefulWidget {
 class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
   String? selectedCut;
   int pieceAmount = 0;
+  int enteredPieceAmount = 0;
   String? errorMessage;
 
   @override
@@ -337,6 +447,17 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             onChanged: (value) {
               setState(() {
                 selectedCut = value;
+
+                var selectedRecord = widget.cutRecords.firstWhere(
+                  (record) => record['code'] == selectedCut,
+                  orElse: () => null,
+                );
+
+                if (selectedRecord != null) {
+                  pieceAmount = selectedRecord['pieceAmount'];
+                } else {
+                  pieceAmount = 0;
+                }
               });
             },
             items: widget.cutRecords.map((record) {
@@ -357,36 +478,27 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
             ),
             onChanged: (value) {
               setState(() {
-                int enteredValue = int.tryParse(value) ?? 0;
+                enteredPieceAmount = int.tryParse(value) ?? 0;
 
-                var selectedRecord = widget.cutRecords.firstWhere(
-                  (record) => record['code'] == selectedCut,
-                  orElse: () => null,
-                );
-
-                if (selectedRecord != null) {
-                  int maxPieces = selectedRecord['pieceAmount'];
-
-                  if (enteredValue < 1 || enteredValue > maxPieces) {
-                    errorMessage = 'Quantidade deve ser entre 1 e $maxPieces';
-                  } else {
-                    errorMessage = null;
-                    pieceAmount = enteredValue;
-                  }
+                if (enteredPieceAmount < 1 ||
+                    enteredPieceAmount > pieceAmount) {
+                  errorMessage = 'Quantidade deve ser entre 1 e $pieceAmount';
                 } else {
-                  errorMessage = 'Nenhum corte selecionado ou código inválido.';
+                  errorMessage = null;
                 }
               });
             },
           ),
           SizedBox(height: 10),
           ElevatedButton(
-            onPressed: () {
-              if (selectedCut != null && pieceAmount > 0) {
-                widget.onStart(selectedCut!, pieceAmount);
-                Navigator.pop(context);
-              }
-            },
+            onPressed: (selectedCut != null &&
+                    enteredPieceAmount > 0 &&
+                    enteredPieceAmount <= pieceAmount)
+                ? () {
+                    widget.onStart(selectedCut!, enteredPieceAmount);
+                    Navigator.pop(context);
+                  }
+                : null, // Botão inativo se as condições não forem atendidas
             child: Text('Iniciar Cronômetro'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.brown.shade400,
