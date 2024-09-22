@@ -1,6 +1,6 @@
 datasource db {
-  provider = "mysql"
-  url      = "https://api.render.com/deploy/srv-crnecpt6l47c73aekv6g?key=wqE4JmMJ7us"
+  provider = "postgresql"
+  url      = "postgresql://prod_manage_database_user:GorbgRzhquoItYMO3rT7Ja5nWC0RCI0T@dpg-crne8pt6l47c73aeihj0-a/prod_manage_database"
 }
 
 generator client {
