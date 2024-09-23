@@ -12,14 +12,15 @@ class _EmployeeRoleRegistrationPageState
     extends State<EmployeeRoleRegistrationPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   final ApiService _apiService = ApiService();
 
   void _saveRole() async {
-    final String title = _titleController.text;
-    final String description = _descriptionController.text;
+    if (_formKey.currentState!.validate()) {
+      final String title = _titleController.text;
+      final String description = _descriptionController.text;
 
-    if (title.isNotEmpty) {
       final Map<String, dynamic> data = {
         "title": title,
         "description": description,
@@ -36,8 +37,6 @@ class _EmployeeRoleRegistrationPageState
       } else {
         _showSnackBar('Erro de conexão. Tente novamente mais tarde.');
       }
-    } else {
-      _showSnackBar('Por favor, preencha o campo do título da função.');
     }
   }
 
@@ -51,52 +50,60 @@ class _EmployeeRoleRegistrationPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Nova Função'),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 10.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          color: Colors.brown.shade50,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Adicione uma nova função',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.brown.shade900,
-                  ),
-                ),
-                SizedBox(height: 20),
-                _buildTextField(_titleController, 'Título da Função'),
-                SizedBox(height: 20),
-                _buildTextField(_descriptionController, 'Descrição da Função'),
-                SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _saveRole,
-                    child: Text('Salvar Função'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown.shade400,
-                      foregroundColor: Colors.white,
-                      textStyle: TextStyle(
-                        fontSize: 18,
+      body: Center(
+        // Adiciona centralização
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+            elevation: 10.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            color: Colors.brown.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // Ajusta o tamanho do card
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Adicione uma nova função',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        fontSize: 20,
+                        color: Colors.brown.shade900,
                       ),
                     ),
-                  ),
+                    SizedBox(height: 20),
+                    _buildTextField(_titleController, 'Título da Função', true),
+                    SizedBox(height: 20),
+                    _buildTextField(
+                        _descriptionController, 'Descrição da Função', false),
+                    SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _saveRole,
+                        child: Text('Salvar Função'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.brown.shade400,
+                          foregroundColor: Colors.white,
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -104,7 +111,8 @@ class _EmployeeRoleRegistrationPageState
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, bool isRequired) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -115,6 +123,14 @@ class _EmployeeRoleRegistrationPageState
         ),
         prefixIcon: Icon(Icons.edit, color: Colors.brown.shade800),
       ),
+      validator: isRequired
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor, preencha o campo $label';
+              }
+              return null;
+            }
+          : null,
     );
   }
 

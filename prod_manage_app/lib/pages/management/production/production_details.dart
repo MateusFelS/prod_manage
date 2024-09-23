@@ -105,7 +105,8 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15.0),
             ),
-            elevation: 5,
+            color: Colors.brown.shade50,
+            elevation: 4,
             child: Padding(
               padding: EdgeInsets.all(16.0),
               child: Column(
@@ -200,7 +201,14 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     return Center(
       child: _imageBuffer == null
           ? CircularProgressIndicator()
-          : Image.memory(_imageBuffer!),
+          : Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: 200,
+              child: Image.memory(
+                _imageBuffer!,
+                fit: BoxFit.contain,
+              ),
+            ),
     );
   }
 

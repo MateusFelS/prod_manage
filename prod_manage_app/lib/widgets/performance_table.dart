@@ -76,11 +76,14 @@ class PerformanceTable extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-            color: isHeader ? Colors.brown.shade800 : Colors.black,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            style: TextStyle(
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              color: isHeader ? Colors.brown.shade800 : Colors.black,
+            ),
           ),
         ),
       ),

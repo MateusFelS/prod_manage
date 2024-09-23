@@ -50,14 +50,18 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   void _processPerformanceData(List performances) {
-    Map<int, List<dynamic>> employeeGroupedPerformances = {};
+    Map<int, Map<String, List<dynamic>>> employeeGroupedPerformances = {};
 
     for (var performance in performances) {
       int employeeId = performance['employeeId'];
+      String date = performance['date'].split('T')[0];
       if (!employeeGroupedPerformances.containsKey(employeeId)) {
-        employeeGroupedPerformances[employeeId] = [];
+        employeeGroupedPerformances[employeeId] = {};
       }
-      employeeGroupedPerformances[employeeId]!.add(performance);
+      if (!employeeGroupedPerformances[employeeId]!.containsKey(date)) {
+        employeeGroupedPerformances[employeeId]![date] = [];
+      }
+      employeeGroupedPerformances[employeeId]![date]!.add(performance);
     }
 
     int totalEmployees = employeeGroupedPerformances.length;
@@ -68,24 +72,37 @@ class _ReportsPageState extends State<ReportsPage> {
     int daysBack = _getDaysBackForPeriod(_selectedPeriod);
     DateTime startDate = now.subtract(Duration(days: daysBack));
 
-    employeeGroupedPerformances.forEach((employeeId, employeePerformances) {
-      List filteredPerformances = employeePerformances.where((performance) {
-        DateTime createdAt = DateTime.parse(performance['createdAt']);
-        return createdAt.isAfter(startDate);
-      }).toList();
+    employeeGroupedPerformances.forEach((employeeId, dailyPerformances) {
+      int totalDays = 0;
+      int daysAboveAverage = 0;
+      int daysBelowAverage = 0;
 
-      int acceptableCount = 0;
-      int insufficientCount = 0;
+      dailyPerformances.forEach((date, performancesOnDate) {
+        DateTime currentDate = DateTime.parse(date);
+        if (currentDate.isAfter(startDate)) {
+          totalDays++;
 
-      for (var performance in filteredPerformances) {
-        if (performance['schedules']['efficiency'] == 'Aceitável') {
-          acceptableCount++;
-        } else if (performance['schedules']['efficiency'] == 'Insuficiente') {
-          insufficientCount++;
+          int acceptableCount = 0;
+          int insufficientCount = 0;
+
+          for (var performance in performancesOnDate) {
+            if (performance['schedules']['efficiency'] == 'Aceitável') {
+              acceptableCount++;
+            } else if (performance['schedules']['efficiency'] ==
+                'Insuficiente') {
+              insufficientCount++;
+            }
+          }
+
+          if (acceptableCount >= insufficientCount) {
+            daysAboveAverage++;
+          } else {
+            daysBelowAverage++;
+          }
         }
-      }
+      });
 
-      if (acceptableCount > insufficientCount) {
+      if (daysAboveAverage > daysBelowAverage) {
         aboveAverageCount++;
       } else {
         belowAverageCount++;
@@ -146,15 +163,12 @@ class _ReportsPageState extends State<ReportsPage> {
   List<FlSpot> _buildLineChartSpots() {
     List<FlSpot> spots = [];
 
-    // Converta as chaves de _employeePerformance para DateTime
     List<DateTime> dates = _employeePerformance.keys
         .map((dateString) => DateTime.parse(dateString))
         .toList();
 
-    // Ordena a lista de datas
     dates.sort((a, b) => a.compareTo(b));
 
-    // Cria os pontos do gráfico (spots) na ordem crescente das datas
     for (int i = 0; i < dates.length; i++) {
       DateTime date = dates[i];
       String formattedDate =
@@ -175,6 +189,28 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _buildLineChart(String title) {
+    if (_employeePerformance.isEmpty) {
+      return _buildChartContainer(
+        title,
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.warning, size: 50, color: Colors.red),
+              SizedBox(height: 10),
+              Text(
+                'Nenhum rendimento cadastrado para este funcionário.',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.brown.shade900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return _buildChartContainer(
       title,
       SizedBox(
@@ -296,8 +332,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   _buildPieChart('Desempenho Geral'),
                   SizedBox(height: 20),
                   _buildEmployeeSelection(),
-                  if (_selectedEmployeeId != null &&
-                      _employeePerformance.isNotEmpty)
+                  if (_selectedEmployeeId != null)
                     _buildLineChart('Desempenho do Funcionário'),
                 ],
               ),

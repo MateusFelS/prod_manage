@@ -90,10 +90,8 @@ class _PerformancePageState extends State<PerformancePage> {
   Future<void> _savePerformanceData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Salva a currentRow
     await prefs.setInt('currentRow_${widget.employee['id']}', currentRow);
 
-    // Salva os dados da performance
     for (int i = 0; i < performanceData.length; i++) {
       await prefs.setString(
           'performance_${widget.employee['id']}_$i',
@@ -108,10 +106,8 @@ class _PerformancePageState extends State<PerformancePage> {
   Future<void> _loadPerformanceData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Carrega a currentRow
     currentRow = prefs.getInt('currentRow_${widget.employee['id']}') ?? 0;
 
-    // Carrega os dados da performance
     for (int i = 0; i < performanceData.length; i++) {
       String? data = prefs.getString('performance_${widget.employee['id']}_$i');
       if (data != null) {
@@ -306,7 +302,7 @@ class _PerformancePageState extends State<PerformancePage> {
       appBar: CustomAppBar(
         title: 'Rendimento de ${widget.employee['name']}',
         actionButton: IconButton(
-          icon: Icon(Icons.clear),
+          icon: Icon(Icons.cleaning_services, size: 20),
           onPressed: _confirmClearData,
         ),
       ),
@@ -427,93 +423,102 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Cronômetro',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.brown.shade900,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: selectedCut,
-            onChanged: (value) {
-              setState(() {
-                selectedCut = value;
-
-                var selectedRecord = widget.cutRecords.firstWhere(
-                  (record) => record['code'] == selectedCut,
-                  orElse: () => null,
-                );
-
-                if (selectedRecord != null) {
-                  pieceAmount = selectedRecord['pieceAmount'];
-                } else {
-                  pieceAmount = 0;
-                }
-              });
-            },
-            items: widget.cutRecords.map((record) {
-              return DropdownMenuItem<String>(
-                value: record['code'],
-                child: Text(record['code']),
-              );
-            }).toList(),
-            decoration: _inputDecoration('Selecione o Código de Corte'),
-          ),
-          SizedBox(height: 10),
-          TextFormField(
-            keyboardType: TextInputType.number,
-            decoration:
-                _inputDecoration('Quantidade de Peças (max: $pieceAmount)')
-                    .copyWith(
-              errorText: errorMessage,
-            ),
-            onChanged: (value) {
-              setState(() {
-                enteredPieceAmount = int.tryParse(value) ?? 0;
-
-                if (enteredPieceAmount < 1 ||
-                    enteredPieceAmount > pieceAmount) {
-                  errorMessage = 'Quantidade deve ser entre 1 e $pieceAmount';
-                } else {
-                  errorMessage = null;
-                }
-              });
-            },
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: (selectedCut != null &&
-                    enteredPieceAmount > 0 &&
-                    enteredPieceAmount <= pieceAmount)
-                ? () {
-                    widget.onStart(selectedCut!, enteredPieceAmount);
-                    Navigator.pop(context);
-                  }
-                : null, // Botão inativo se as condições não forem atendidas
-            child: Text('Iniciar Cronômetro'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.brown.shade400,
-              foregroundColor: Colors.white,
-              textStyle: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom +
+              16.0, // Adiciona espaço para o teclado
+        ),
+        child: Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Cronômetro',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Colors.brown.shade900,
+                ),
+                textAlign: TextAlign.center,
               ),
-              fixedSize: Size(MediaQuery.of(context).size.width * .8, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCut,
+                onChanged: (value) {
+                  setState(() {
+                    selectedCut = value;
+
+                    var selectedRecord = widget.cutRecords.firstWhere(
+                      (record) => record['code'] == selectedCut,
+                      orElse: () => null,
+                    );
+
+                    if (selectedRecord != null) {
+                      pieceAmount = selectedRecord['pieceAmount'];
+                    } else {
+                      pieceAmount = 0;
+                    }
+                  });
+                },
+                items: widget.cutRecords.map((record) {
+                  return DropdownMenuItem<String>(
+                    value: record['code'],
+                    child: Text(record['code']),
+                  );
+                }).toList(),
+                decoration: _inputDecoration('Selecione o Código de Corte'),
               ),
-            ),
+              SizedBox(height: 10),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration:
+                    _inputDecoration('Quantidade de Peças (max: $pieceAmount)')
+                        .copyWith(
+                  errorText: errorMessage,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    enteredPieceAmount = int.tryParse(value) ?? 0;
+
+                    if (enteredPieceAmount < 1 ||
+                        enteredPieceAmount > pieceAmount) {
+                      errorMessage =
+                          'Quantidade deve ser entre 1 e $pieceAmount';
+                    } else {
+                      errorMessage = null;
+                    }
+                  });
+                },
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: (selectedCut != null &&
+                        enteredPieceAmount > 0 &&
+                        enteredPieceAmount <= pieceAmount)
+                    ? () {
+                        widget.onStart(selectedCut!, enteredPieceAmount);
+                        Navigator.pop(context);
+                      }
+                    : null,
+                child: Text('Iniciar Cronômetro'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.brown.shade400,
+                  foregroundColor: Colors.white,
+                  textStyle: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  fixedSize: Size(MediaQuery.of(context).size.width * .8, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

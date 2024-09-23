@@ -11,6 +11,7 @@ class RegisterEmployeePage extends StatefulWidget {
 
 class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
   final _nameController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   List<Map<String, dynamic>> _roles = [];
   int _selectedRoleId = 0;
   String _selectedRoleTitle = '';
@@ -40,9 +41,9 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
   }
 
   void _saveRegistroFuncionario() async {
-    final String name = _nameController.text;
+    if (_formKey.currentState!.validate()) {
+      final String name = _nameController.text;
 
-    if (name.isNotEmpty && _selectedDate != null) {
       final Map<String, dynamic> data = {
         "name": name,
         "role": {
@@ -61,7 +62,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
             'Erro ao salvar funcionário: ${response?.reasonPhrase ?? 'Erro desconhecido'}');
       }
     } else {
-      _showSnackBar('Por favor, preencha todos os campos');
+      _showSnackBar('Por favor, preencha todos os campos obrigatórios');
     }
   }
 
@@ -72,16 +73,27 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: DateTime(2020),
       lastDate: DateTime(2101),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.brown.shade800,
+            colorScheme: ColorScheme.light(primary: Colors.brown.shade800),
+            dialogBackgroundColor: Colors.brown.shade100,
+            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+          ),
+          child: child ?? Container(),
+        );
+      },
     );
 
-    if (picked != null) {
+    if (pickedDate != null) {
       setState(() {
-        _selectedDate = picked;
+        _selectedDate = pickedDate;
       });
     }
   }
@@ -109,57 +121,65 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildTitle('Preencha os dados abaixo'),
-                    SizedBox(height: 20.0),
-                    _buildTextField(_nameController, 'Nome', Icons.person),
-                    SizedBox(height: 20.0),
-                    _buildDropdownField(),
-                    SizedBox(height: 20.0),
-                    Container(
-                      width: MediaQuery.of(context).size.width * .8,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _navigateToRoleRegistration,
-                        child: Text('Adicionar Nova Função'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade400,
-                          foregroundColor: Colors.white,
-                          textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTitle('Preencha os dados abaixo'),
+                      SizedBox(height: 20.0),
+                      _buildTextField(
+                        _nameController,
+                        'Nome *',
+                        Icons.person,
+                        'O nome é obrigatório',
+                      ),
+                      SizedBox(height: 20.0),
+                      _buildDropdownField(),
+                      SizedBox(height: 20.0),
+                      Container(
+                        width: MediaQuery.of(context).size.width * .8,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _navigateToRoleRegistration,
+                          child: Text('Adicionar Nova Função'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.brown.shade400,
+                            foregroundColor: Colors.white,
+                            textStyle: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20.0),
-                    _buildDatePicker(context),
-                    SizedBox(height: 20.0),
-                    Container(
-                      width: MediaQuery.of(context).size.width * .8,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _saveRegistroFuncionario,
-                        child: Text('Salvar'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade400,
-                          foregroundColor: Colors.white,
-                          textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      SizedBox(height: 20.0),
+                      _buildDatePicker(context),
+                      SizedBox(height: 20.0),
+                      Container(
+                        width: MediaQuery.of(context).size.width * .8,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _saveRegistroFuncionario,
+                          child: Text('Salvar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.brown.shade400,
+                            foregroundColor: Colors.white,
+                            textStyle: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -180,8 +200,8 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
     );
   }
 
-  Widget _buildTextField(
-      TextEditingController controller, String label, IconData icon) {
+  Widget _buildTextField(TextEditingController controller, String label,
+      IconData icon, String validationMessage) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -192,6 +212,12 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
         ),
         prefixIcon: Icon(icon, color: Colors.brown.shade800),
       ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return validationMessage;
+        }
+        return null;
+      },
     );
   }
 
@@ -206,7 +232,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
         });
       },
       decoration: InputDecoration(
-        labelText: 'Função',
+        labelText: 'Função *',
         labelStyle: TextStyle(color: Colors.brown.shade800),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
@@ -229,7 +255,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
         child: TextFormField(
           decoration: InputDecoration(
             labelText: _selectedDate == null
-                ? 'Data de Entrada'
+                ? 'Data de Entrada *'
                 : 'Data: ${DateFormat('dd/MM/yyyy').format(_selectedDate!)}',
             labelStyle: TextStyle(color: Colors.brown.shade800),
             border: OutlineInputBorder(
@@ -238,6 +264,12 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
             prefixIcon:
                 Icon(Icons.calendar_today, color: Colors.brown.shade800),
           ),
+          validator: (value) {
+            if (_selectedDate == null) {
+              return 'A data de entrada é obrigatória';
+            }
+            return null;
+          },
         ),
       ),
     );

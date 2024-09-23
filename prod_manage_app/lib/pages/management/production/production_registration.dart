@@ -13,6 +13,7 @@ class ProductionRegistrationPage extends StatefulWidget {
 
 class _ProductionRegistrationPageState
     extends State<ProductionRegistrationPage> {
+  final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   final _pieceAmountController = TextEditingController();
   final _line1Controller = TextEditingController();
@@ -52,7 +53,19 @@ class _ProductionRegistrationPageState
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2101),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.brown.shade800,
+            colorScheme: ColorScheme.light(primary: Colors.brown.shade800),
+            dialogBackgroundColor: Colors.brown.shade100,
+            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+          ),
+          child: child ?? Container(),
+        );
+      },
     );
+
     if (pickedDate != null) {
       setState(() {
         _limiteDate = pickedDate;
@@ -61,27 +74,22 @@ class _ProductionRegistrationPageState
   }
 
   Future<void> _saveRegistroCorte() async {
-    final String code = _codeController.text;
-    final int pieceAmount = int.parse(_pieceAmountController.text);
-    final String line1 = _line1Controller.text;
-    final String line2 = _line2Controller.text;
-    final String comment = _commentController.text;
-    final String supplier = _supplierController.text;
-    final String status = "Em progresso";
-    final DateTime? limiteDate = _limiteDate;
+    if (_formKey.currentState!.validate()) {
+      final String code = _codeController.text;
+      final int pieceAmount = int.tryParse(_pieceAmountController.text) ?? 0;
+      final String line1 = _line1Controller.text;
+      final String line2 = _line2Controller.text;
+      final String comment = _commentController.text;
+      final String supplier = _supplierController.text;
+      final String status = "Em progresso";
+      final DateTime? limiteDate = _limiteDate;
 
-    if (code.isNotEmpty &&
-        pieceAmount > 0 &&
-        line1.isNotEmpty &&
-        line2.isNotEmpty &&
-        limiteDate != null &&
-        _selectedEmployeeId != null) {
       final Map<String, dynamic> data = {
         "code": code,
         "pieceAmount": pieceAmount,
         "line1": line1,
         "line2": line2,
-        "limiteDate": limiteDate.toIso8601String(),
+        "limiteDate": limiteDate!.toIso8601String(),
         "comment": comment,
         "supplier": supplier,
         "status": status,
@@ -115,7 +123,9 @@ class _ProductionRegistrationPageState
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, preencha todos os campos')),
+        SnackBar(
+          content: Text('Por favor, preencha todos os campos obrigatórios'),
+        ),
       );
     }
   }
@@ -141,107 +151,136 @@ class _ProductionRegistrationPageState
       appBar: CustomAppBar(title: 'Registro de Corte'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 8.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          color: Colors.brown.shade50,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Preencha os dados abaixo',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.brown.shade900,
-                  ),
-                ),
-                SizedBox(height: 20.0),
-                _buildTextField(_codeController, 'Código', Icons.code),
-                SizedBox(height: 16.0),
-                _buildTextField(_supplierController, 'Fornecedor', Icons.store),
-                SizedBox(height: 16.0),
-                _buildTextField(
-                  _pieceAmountController,
-                  'Quantidade de Peça',
-                  Icons.numbers,
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: 16.0),
-                _buildTextField(_line1Controller, 'Linha 1', Icons.line_style),
-                SizedBox(height: 16.0),
-                _buildTextField(_line2Controller, 'Linha 2', Icons.line_style),
-                SizedBox(height: 16.0),
-                _buildTextField(
-                    _commentController, 'Comentário', Icons.comment),
-                SizedBox(height: 16.0),
-                DropdownButtonFormField<int>(
-                  value: _selectedEmployeeId,
-                  hint: Text('Selecione o Funcionário'),
-                  onChanged: (int? newValue) {
-                    setState(() {
-                      _selectedEmployeeId = newValue;
-                    });
-                  },
-                  items: _employees.map<DropdownMenuItem<int>>((employee) {
-                    return DropdownMenuItem<int>(
-                      value: employee['id'],
-                      child: Text(employee['name']),
-                    );
-                  }).toList(),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+        child: Form(
+          key: _formKey,
+          child: Card(
+            elevation: 8.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            color: Colors.brown.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Preencha os dados abaixo *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.brown.shade900,
                     ),
                   ),
-                ),
-                SizedBox(height: 16.0),
-                _buildTextField(
-                  TextEditingController(
-                      text: _limiteDate == null
-                          ? ''
-                          : _limiteDate!.toLocal().toString().split(' ')[0]),
-                  'Data Limite',
-                  Icons.calendar_today,
-                  readOnly: true,
-                  onTap: () => _selectDate(context),
-                ),
-                SizedBox(height: 16.0),
-                _buildTextField(
-                  TextEditingController(
-                      text: _imageFile == null
-                          ? 'Nenhuma imagem'
-                          : _imageFile!.path.split('/').last),
-                  'Imagem',
-                  Icons.image,
-                  readOnly: true,
-                  onTap: _pickImage,
-                ),
-                SizedBox(height: 20.0),
-                Container(
-                  width: MediaQuery.of(context).size.width * .8,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _saveRegistroCorte,
-                    child: Text('Salvar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown.shade400,
-                      foregroundColor: Colors.white,
-                      textStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  SizedBox(height: 20.0),
+                  _buildTextFormField(
+                    _codeController,
+                    'Código *',
+                    Icons.code,
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    _supplierController,
+                    'Fornecedor *',
+                    Icons.store,
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    _pieceAmountController,
+                    'Quantidade de Peça *',
+                    Icons.numbers,
+                    keyboardType: TextInputType.number,
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    _line1Controller,
+                    'Linha 1 *',
+                    Icons.line_style,
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    _line2Controller,
+                    'Linha 2 *',
+                    Icons.line_style,
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    _commentController,
+                    'Comentário',
+                    Icons.comment,
+                  ),
+                  SizedBox(height: 16.0),
+                  DropdownButtonFormField<int>(
+                    value: _selectedEmployeeId,
+                    hint: Text('Selecione o Funcionário *'),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedEmployeeId = newValue;
+                      });
+                    },
+                    items: _employees.map<DropdownMenuItem<int>>((employee) {
+                      return DropdownMenuItem<int>(
+                        value: employee['id'],
+                        child: Text(employee['name']),
+                      );
+                    }).toList(),
+                    validator: _dropdownValidator,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    TextEditingController(
+                        text: _limiteDate == null
+                            ? ''
+                            : _limiteDate!.toLocal().toString().split(' ')[0]),
+                    'Data Limite *',
+                    Icons.calendar_today,
+                    readOnly: true,
+                    onTap: () => _selectDate(context),
+                    validator: _notEmptyValidator,
+                  ),
+                  SizedBox(height: 16.0),
+                  _buildTextFormField(
+                    TextEditingController(
+                        text: _imageFile == null
+                            ? 'Nenhuma imagem'
+                            : _imageFile!.path.split('/').last),
+                    'Imagem',
+                    Icons.image,
+                    readOnly: true,
+                    onTap: _pickImage,
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    width: MediaQuery.of(context).size.width * .8,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _saveRegistroCorte,
+                      child: Text('Salvar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown.shade400,
+                        foregroundColor: Colors.white,
+                        textStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -249,24 +288,42 @@ class _ProductionRegistrationPageState
     );
   }
 
-  Widget _buildTextField(
-      TextEditingController controller, String label, IconData icon,
-      {TextInputType keyboardType = TextInputType.text,
-      bool readOnly = false,
-      VoidCallback? onTap}) {
-    return TextField(
+  Widget _buildTextFormField(
+    TextEditingController controller,
+    String labelText,
+    IconData iconData, {
+    bool readOnly = false,
+    TextInputType? keyboardType,
+    VoidCallback? onTap,
+    FormFieldValidator<String>? validator,
+  }) {
+    return TextFormField(
       controller: controller,
-      keyboardType: keyboardType,
       readOnly: readOnly,
+      keyboardType: keyboardType,
       onTap: onTap,
+      validator: validator,
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.brown.shade800),
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.brown.shade800),
+        labelText: labelText,
+        prefixIcon: Icon(iconData),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
       ),
     );
+  }
+
+  String? _notEmptyValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Campo obrigatório';
+    }
+    return null;
+  }
+
+  String? _dropdownValidator(int? value) {
+    if (value == null) {
+      return 'Selecione um funcionário';
+    }
+    return null;
   }
 }
