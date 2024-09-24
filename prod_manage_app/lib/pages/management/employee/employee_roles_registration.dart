@@ -51,7 +51,6 @@ class _EmployeeRoleRegistrationPageState
     return Scaffold(
       appBar: CustomAppBar(title: 'Nova Função'),
       body: Center(
-        // Adiciona centralização
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Card(
@@ -65,7 +64,7 @@ class _EmployeeRoleRegistrationPageState
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min, // Ajusta o tamanho do card
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(

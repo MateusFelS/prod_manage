@@ -70,7 +70,7 @@ class HomePage extends StatelessWidget {
                   ),
                   _buildMenuIcon(
                     context,
-                    'Ver Rendimento',
+                    'Gerenciar Rendimento',
                     Icons.bar_chart,
                     '/employee_list',
                   ),

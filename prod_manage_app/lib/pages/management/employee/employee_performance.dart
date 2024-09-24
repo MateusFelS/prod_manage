@@ -301,9 +301,19 @@ class _PerformancePageState extends State<PerformancePage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Rendimento de ${widget.employee['name']}',
-        actionButton: IconButton(
-          icon: Icon(Icons.cleaning_services, size: 20),
-          onPressed: _confirmClearData,
+        actionButton: Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.help_outline, size: 24),
+              onPressed: () {
+                _showHelpDialog();
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.cleaning_services, size: 20),
+              onPressed: _confirmClearData,
+            ),
+          ],
         ),
       ),
       body: Padding(
@@ -335,6 +345,50 @@ class _PerformancePageState extends State<PerformancePage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Como funciona a tabela de rendimento?',
+              style: TextStyle(fontSize: 18)),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text(
+                    '1. Escolha um corte relacionado ao funcionário e o número de peças desejados.',
+                    style: TextStyle(fontSize: 12)),
+                SizedBox(height: 5),
+                Text(
+                    '2. O sistema calculará automaticamente o valor previsto de peças nas colunas de 100% e 70%.',
+                    style: TextStyle(fontSize: 12)),
+                SizedBox(height: 5),
+                Text(
+                    '3. Um rendimento acima de 70% será considerado aceitável e abaixo de 70% ináceitavel.',
+                    style: TextStyle(fontSize: 12)),
+                SizedBox(height: 5),
+                Text(
+                    '4. A coluna "Rendimento" deve ser completada manualmente com o valor de peças que o funcionário cumpriu no intervalo de tempo.',
+                    style: TextStyle(fontSize: 12)),
+                SizedBox(height: 5),
+                Text('5. Após completa, clique em salvar.',
+                    style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Entendi', style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -426,8 +480,7 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom +
-              16.0, // Adiciona espaço para o teclado
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
         ),
         child: Container(
           padding: EdgeInsets.all(16.0),

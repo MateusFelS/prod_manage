@@ -19,7 +19,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.brown.shade400,
       iconTheme: IconThemeData(
         color: Colors.white,
-        size: 16,
       ),
       actions: actionButton != null ? [actionButton!] : [],
     );
