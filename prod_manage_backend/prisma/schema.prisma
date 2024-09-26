@@ -1,6 +1,6 @@
 datasource db {
   provider = "mysql"
-  url = "database-1.c9ckaekcyx87.us-east-2.rds.amazonaws.com"
+  url = "mysql://Mateus:97692248Mateus@database-1.c9ckaekcyx87.us-east-2.rds.amazonaws.com/database-1"
 }
 
 generator client {
