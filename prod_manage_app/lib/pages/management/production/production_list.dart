@@ -34,9 +34,13 @@ class _ProductionListPageState extends State<ProductionListPage> {
   }) async {
     try {
       final data = await fetchMethod();
-      onSuccess(data);
+      if (mounted) {
+        onSuccess(data);
+      }
     } catch (e) {
-      _showSnackBar('$errorMessage: $e');
+      if (mounted) {
+        _showSnackBar('$errorMessage: $e');
+      }
     }
   }
 
@@ -151,9 +155,11 @@ class _ProductionListPageState extends State<ProductionListPage> {
   Widget _buildFilterButton(String status) {
     return ElevatedButton(
       onPressed: () {
-        setState(() {
-          _selectedStatus = status;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedStatus = status;
+          });
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: _selectedStatus == status
@@ -168,7 +174,7 @@ class _ProductionListPageState extends State<ProductionListPage> {
 
   Widget _buildCutCard(Map<String, dynamic> cut) {
     return Card(
-      color: Colors.brown.shade100,
+      color: Colors.brown.shade50,
       elevation: 4.0,
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       shape: RoundedRectangleBorder(

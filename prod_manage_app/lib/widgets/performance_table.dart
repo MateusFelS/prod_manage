@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 
-class PerformanceTable extends StatelessWidget {
+class PerformanceTable extends StatefulWidget {
   final List<String> timeSlots;
   final List<Map<String, String>> performanceData;
   final Function(int, String) onRendimentoChanged;
+  final Function(int, String, String) onMetaChanged;
 
   PerformanceTable({
     required this.timeSlots,
     required this.performanceData,
     required this.onRendimentoChanged,
+    required this.onMetaChanged,
   });
 
+  @override
+  State<PerformanceTable> createState() => _PerformanceTableState();
+}
+
+class _PerformanceTableState extends State<PerformanceTable> {
   @override
   Widget build(BuildContext context) {
     return Table(
@@ -33,15 +40,15 @@ class PerformanceTable extends StatelessWidget {
             _buildTableCell('Rendimento', isHeader: true),
           ],
         ),
-        for (int i = 0; i < timeSlots.length; i++)
+        for (int i = 0; i < widget.timeSlots.length; i++)
           TableRow(
             decoration: BoxDecoration(
               color: Colors.brown.shade100,
             ),
             children: [
-              _buildTableCell(timeSlots[i]),
-              _buildTableCell(performanceData[i]['100%']!),
-              _buildTableCell(performanceData[i]['70%']!),
+              _buildTableCell(widget.timeSlots[i]),
+              _buildEditableCell(i, '100%'),
+              _buildEditableCell(i, '70%'),
               _buildEditableTableCell(i),
             ],
           ),
@@ -49,16 +56,104 @@ class PerformanceTable extends StatelessWidget {
     );
   }
 
+  Widget _buildEditableCell(int index, String key) {
+    final isEditable = (widget.performanceData[index][key] ?? 'N/A') != 'N/A';
+
+    return GestureDetector(
+      onTap: isEditable
+          ? () {
+              _showEditDialog(index, key);
+            }
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          height: 50,
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              widget.performanceData[index][key] ?? 'N/A',
+              style: TextStyle(
+                color: isEditable ? Colors.black : Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(int index, String key) {
+    String currentValue = widget.performanceData[index][key] ?? '0';
+    TextEditingController controller =
+        TextEditingController(text: currentValue);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.brown.shade50,
+          title: Text(
+            'Editar $key',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.brown.shade900,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: 'Digite o novo valor',
+              hintStyle: TextStyle(color: Colors.brown.shade400),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                borderSide: BorderSide(color: Colors.brown.shade800),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final newValue = controller.text;
+                widget.onMetaChanged(index, key, newValue);
+                Navigator.of(context).pop();
+              },
+              style:
+                  TextButton.styleFrom(backgroundColor: Colors.brown.shade400),
+              child: Text(
+                'Salvar',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildEditableTableCell(int index) {
-    final rendimento = performanceData[index]['Rendimento'] ?? '0';
-    final meta70 = double.tryParse(performanceData[index]['70%'] ?? '0') ?? 0;
+    final rendimento = widget.performanceData[index]['Rendimento'] ?? '0';
+    final meta70 =
+        double.tryParse(widget.performanceData[index]['70%'] ?? '0') ?? 0;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextField(
         keyboardType: TextInputType.number,
         onChanged: (value) {
-          onRendimentoChanged(index, value);
+          widget.onRendimentoChanged(index, value);
         },
         style: TextStyle(
           color: rendimentoColor(rendimento, meta70),
@@ -75,17 +170,26 @@ class PerformanceTable extends StatelessWidget {
   Widget _buildTableCell(String text, {bool isHeader = false}) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            text,
-            style: TextStyle(
-              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-              color: isHeader ? Colors.brown.shade800 : Colors.black,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Container(
+              height: 50,
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                    color: isHeader ? Colors.brown.shade800 : Colors.black,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

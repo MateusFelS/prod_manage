@@ -143,7 +143,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
 
   Widget _buildEmployeeCard(dynamic employee) {
     return Card(
-      color: Colors.brown.shade100,
+      color: Colors.brown.shade50,
       elevation: 4.0,
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       shape: RoundedRectangleBorder(
@@ -196,7 +196,8 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => PerformancePage(employee: employee)),
+        builder: (context) => PerformancePage(employee: employee),
+      ),
     );
   }
 }

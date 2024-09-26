@@ -28,6 +28,7 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _fetchEmployees() async {
     try {
       List employees = await _apiService.fetchEmployees();
+      if (!mounted) return; // Check if the widget is still mounted
       setState(() {
         _employees = employees;
         if (_employees.isNotEmpty) {
@@ -36,6 +37,7 @@ class _ReportsPageState extends State<ReportsPage> {
         }
       });
     } catch (error) {
+      if (!mounted) return; // Check if the widget is still mounted
       _showSnackBar('Erro ao carregar a lista de funcionários: $error');
     }
   }
@@ -43,8 +45,10 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _fetchPerformanceData() async {
     try {
       List performances = await _apiService.fetchPerformanceData();
+      if (!mounted) return; // Check if the widget is still mounted
       _processPerformanceData(performances);
     } catch (error) {
+      if (!mounted) return; // Check if the widget is still mounted
       _showSnackBar('Erro ao carregar os dados de desempenho: $error');
     }
   }
@@ -55,15 +59,19 @@ class _ReportsPageState extends State<ReportsPage> {
     for (var performance in performances) {
       int employeeId = performance['employeeId'];
       String date = performance['date'].split('T')[0];
-      if (!employeeGroupedPerformances.containsKey(employeeId)) {
-        employeeGroupedPerformances[employeeId] = {};
-      }
-      if (!employeeGroupedPerformances[employeeId]!.containsKey(date)) {
-        employeeGroupedPerformances[employeeId]![date] = [];
-      }
+      employeeGroupedPerformances.putIfAbsent(employeeId, () => {});
+      employeeGroupedPerformances[employeeId]!.putIfAbsent(date, () => []);
       employeeGroupedPerformances[employeeId]![date]!.add(performance);
     }
 
+    _calculatePerformanceAverages(employeeGroupedPerformances);
+    if (_selectedEmployeeId != null) {
+      _processEmployeePerformance(performances);
+    }
+  }
+
+  void _calculatePerformanceAverages(
+      Map<int, Map<String, List<dynamic>>> employeeGroupedPerformances) {
     int totalEmployees = employeeGroupedPerformances.length;
     int aboveAverageCount = 0;
     int belowAverageCount = 0;
@@ -81,18 +89,12 @@ class _ReportsPageState extends State<ReportsPage> {
         DateTime currentDate = DateTime.parse(date);
         if (currentDate.isAfter(startDate)) {
           totalDays++;
-
-          int acceptableCount = 0;
-          int insufficientCount = 0;
-
-          for (var performance in performancesOnDate) {
-            if (performance['schedules']['efficiency'] == 'Aceitável') {
-              acceptableCount++;
-            } else if (performance['schedules']['efficiency'] ==
-                'Insuficiente') {
-              insufficientCount++;
-            }
-          }
+          int acceptableCount = performancesOnDate
+              .where((p) => p['schedules']['efficiency'] == 'Aceitável')
+              .length;
+          int insufficientCount = performancesOnDate
+              .where((p) => p['schedules']['efficiency'] == 'Insuficiente')
+              .length;
 
           if (acceptableCount >= insufficientCount) {
             daysAboveAverage++;
@@ -115,29 +117,25 @@ class _ReportsPageState extends State<ReportsPage> {
       _percentAbaixoDaMedia =
           totalEmployees > 0 ? (belowAverageCount / totalEmployees) * 100 : 0;
     });
-
-    if (_selectedEmployeeId != null) {
-      _processEmployeePerformance(performances);
-    }
   }
 
   void _processEmployeePerformance(List performances) {
-    Map<String, double> performanceData = {};
+    Map<String, double> dailyProductionForEmployee = {};
 
-    List employeePerformances = performances.where((performance) {
+    List filteredPerformances = performances.where((performance) {
       return performance['employeeId'] == _selectedEmployeeId;
     }).toList();
 
-    if (employeePerformances.isNotEmpty) {
-      for (var performance in employeePerformances) {
-        String date = performance['date'].split('T')[0];
-        int produced = performance['produced'];
-        performanceData[date] = produced.toDouble();
-      }
+    for (var performance in filteredPerformances) {
+      String date = performance['date'].split('T')[0];
+      int produced = performance['produced'];
+
+      dailyProductionForEmployee.update(date, (value) => value + produced,
+          ifAbsent: () => produced.toDouble());
     }
 
     setState(() {
-      _employeePerformance = performanceData;
+      _employeePerformance = dailyProductionForEmployee;
     });
   }
 
@@ -162,19 +160,13 @@ class _ReportsPageState extends State<ReportsPage> {
 
   List<FlSpot> _buildLineChartSpots() {
     List<FlSpot> spots = [];
-
-    List<DateTime> dates = _employeePerformance.keys
-        .map((dateString) => DateTime.parse(dateString))
-        .toList();
-
-    dates.sort((a, b) => a.compareTo(b));
+    var dates = _employeePerformance.keys.map(DateTime.parse).toList();
+    dates.sort();
 
     for (int i = 0; i < dates.length; i++) {
-      DateTime date = dates[i];
       String formattedDate =
-          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-
-      double value = _employeePerformance[formattedDate]!.toDouble();
+          "${dates[i].year}-${dates[i].month.toString().padLeft(2, '0')}-${dates[i].day.toString().padLeft(2, '0')}";
+      double value = _employeePerformance[formattedDate]!;
       spots.add(FlSpot(i.toDouble(), value));
     }
 
@@ -182,71 +174,24 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   double _getMaxYValue() {
-    if (_employeePerformance.isEmpty) return 10000;
-    double maxValue =
-        _employeePerformance.values.reduce((a, b) => a > b ? a : b);
-    return maxValue * 1.1;
+    return _employeePerformance.isEmpty
+        ? 10000
+        : _employeePerformance.values.reduce((a, b) => a > b ? a : b);
   }
 
   Widget _buildLineChart(String title) {
     if (_employeePerformance.isEmpty) {
-      return _buildChartContainer(
-        title,
-        Center(
-          child: Column(
-            children: [
-              Icon(Icons.warning, size: 50, color: Colors.red),
-              SizedBox(height: 10),
-              Text(
-                'Nenhum rendimento cadastrado para este funcionário.',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Colors.brown.shade900,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyChartContainer(title);
     }
 
     return _buildChartContainer(
       title,
       SizedBox(
-        height: 300,
+        height: 270,
         child: LineChart(
           LineChartData(
             gridData: FlGridData(show: true),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 40,
-                  interval: 1,
-                  getTitlesWidget: (value, meta) {
-                    int index = value.toInt();
-                    List<DateTime> sortedDates = _employeePerformance.keys
-                        .map((dateString) => DateTime.parse(dateString))
-                        .toList();
-                    sortedDates.sort((a, b) => a.compareTo(b));
-
-                    if (index >= 0 && index < sortedDates.length) {
-                      var date = sortedDates[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          '${date.day}/${date.month}',
-                          style: TextStyle(fontSize: 10),
-                        ),
-                      );
-                    } else {
-                      return Text('');
-                    }
-                  },
-                ),
-              ),
-            ),
+            titlesData: _buildTitlesData(),
             borderData: FlBorderData(
               show: true,
               border: Border.all(color: Colors.grey, width: 1),
@@ -268,73 +213,80 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _buildChartContainer(String title, Widget chart) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.brown.shade100,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.brown.shade900,
-            ),
-          ),
-          SizedBox(height: 10),
-          chart,
-        ],
+  AxisTitles _buildBottomTitles() {
+    return AxisTitles(
+      sideTitles: SideTitles(
+        showTitles: true,
+        reservedSize: 40,
+        interval: 1,
+        getTitlesWidget: (value, meta) {
+          int index = value.toInt();
+          var sortedDates =
+              _employeePerformance.keys.map(DateTime.parse).toList();
+          sortedDates.sort();
+
+          if (index >= 0 && index < sortedDates.length) {
+            var date = sortedDates[index];
+            return Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                '${date.day}/${date.month}',
+                style: TextStyle(fontSize: 10),
+              ),
+            );
+          } else {
+            return Text('');
+          }
+        },
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: 'Relatórios de Desempenho'),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+  FlTitlesData _buildTitlesData() {
+    return FlTitlesData(
+      leftTitles: _buildSideTitles(),
+      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      bottomTitles: _buildBottomTitles(),
+    );
+  }
+
+  AxisTitles _buildSideTitles() {
+    return AxisTitles(
+      sideTitles: SideTitles(
+        showTitles: true,
+        reservedSize: 35,
+        getTitlesWidget: (value, meta) {
+          String text;
+          if (value >= 1000) {
+            text = (value / 1000).toStringAsFixed(1) + 'K';
+          } else {
+            text = value.toInt().toString();
+          }
+
+          return Text(
+            text,
+            style: TextStyle(fontSize: 10),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyChartContainer(String title) {
+    return _buildChartContainer(
+      title,
+      Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Icon(Icons.warning, size: 50, color: Colors.red),
+            SizedBox(height: 10),
             Text(
-              'Selecionar Período:',
+              'Nenhum rendimento cadastrado neste periodo.',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 12,
                 color: Colors.brown.shade900,
-              ),
-            ),
-            DropdownButton<String>(
-              value: _selectedPeriod,
-              items: ['7 Dias', '15 Dias', '30 Dias'].map((String period) {
-                return DropdownMenuItem<String>(
-                  value: period,
-                  child: Text(period),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedPeriod = newValue!;
-                  _fetchPerformanceData();
-                });
-              },
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildPieChart('Desempenho Geral'),
-                  SizedBox(height: 20),
-                  _buildEmployeeSelection(),
-                  if (_selectedEmployeeId != null)
-                    _buildLineChart('Desempenho do Funcionário'),
-                ],
               ),
             ),
           ],
@@ -343,9 +295,43 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
+  Widget _buildChartContainer(String title, Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.brown.shade50,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
   Widget _buildPieChart(String title) {
+    if (_employeePerformance.isEmpty) {
+      return _buildEmptyChartContainer(title);
+    }
     return _buildChartContainer(
-      title,
+      'Desempenho de Funcionários',
       Column(
         children: [
           SizedBox(
@@ -354,52 +340,40 @@ class _ReportsPageState extends State<ReportsPage> {
               PieChartData(
                 sections: [
                   PieChartSectionData(
-                    value: _percentAcimaDaMedia,
                     color: Colors.green,
+                    value: _percentAcimaDaMedia,
                     title: '${_percentAcimaDaMedia.toStringAsFixed(1)}%',
-                    radius: 70,
+                    radius: 100,
                     titleStyle: TextStyle(
-                      fontSize: 12,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   PieChartSectionData(
-                    value: _percentAbaixoDaMedia,
                     color: Colors.red,
+                    value: _percentAbaixoDaMedia,
                     title: '${_percentAbaixoDaMedia.toStringAsFixed(1)}%',
-                    radius: 70,
+                    radius: 100,
                     titleStyle: TextStyle(
-                      fontSize: 12,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                 ],
-                centerSpaceRadius: 30,
                 sectionsSpace: 2,
+                centerSpaceRadius: 0,
               ),
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 20,
-                height: 20,
-                color: Colors.green,
-              ),
-              SizedBox(width: 8),
-              Text('Acima da média'),
-              SizedBox(width: 20),
-              Container(
-                width: 20,
-                height: 20,
-                color: Colors.red,
-              ),
-              SizedBox(width: 8),
-              Text('Abaixo da média'),
+              _buildLegendItem(Colors.green, 'Acima da Média'),
+              SizedBox(width: 16),
+              _buildLegendItem(Colors.red, 'Abaixo da Média'),
             ],
           ),
         ],
@@ -407,33 +381,88 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _buildEmployeeSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildLegendItem(Color color, String text) {
+    return Row(
       children: [
-        Text(
-          'Selecione um Funcionário:',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.brown.shade900,
-          ),
+        Container(
+          width: 16,
+          height: 16,
+          color: color,
         ),
-        DropdownButton<int>(
-          value: _selectedEmployeeId,
-          items: _employees.map((employee) {
-            return DropdownMenuItem<int>(
-              value: employee['id'],
-              child: Text(employee['name']),
-            );
-          }).toList(),
-          onChanged: (int? newValue) {
-            setState(() {
-              _selectedEmployeeId = newValue;
-              _fetchPerformanceData();
-            });
-          },
+        SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(fontSize: 14),
         ),
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(title: 'Relatórios'),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Seleciona um período:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(width: 16),
+                DropdownButton<String>(
+                  value: _selectedPeriod,
+                  items: ['7 Dias', '15 Dias', '30 Dias'].map((period) {
+                    return DropdownMenuItem<String>(
+                      value: period,
+                      child: Text(period),
+                    );
+                  }).toList(),
+                  onChanged: (newPeriod) {
+                    setState(() {
+                      _selectedPeriod = newPeriod!;
+                      _fetchPerformanceData();
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            _buildPieChart('Desempenho de Funcionários'),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  'Selecione um Funcionário:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(width: 16),
+                DropdownButton<int>(
+                  value: _selectedEmployeeId,
+                  items: _employees.map((employee) {
+                    return DropdownMenuItem<int>(
+                      value: employee['id'],
+                      child: Text(employee['name']),
+                    );
+                  }).toList(),
+                  onChanged: (newEmployeeId) {
+                    setState(() {
+                      _selectedEmployeeId = newEmployeeId;
+                      _fetchPerformanceData();
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            _buildLineChart('Produção Diária do Funcionário'),
+          ],
+        ),
+      ),
     );
   }
 }
