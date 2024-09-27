@@ -20,60 +20,6 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
 
-  void _startTimer() {
-    setState(() {
-      isTiming = true;
-      finalTime = "";
-      _seconds = 0;
-      elapsedTime = _formatElapsedTime(_seconds);
-    });
-
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _seconds++;
-        elapsedTime = _formatElapsedTime(_seconds);
-      });
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    setState(() {
-      isTiming = false;
-      finalTime = elapsedTime;
-      _seconds = 0;
-      elapsedTime = _formatElapsedTime(_seconds);
-    });
-  }
-
-  String _formatElapsedTime(int seconds) {
-    final hours = (seconds ~/ 3600).toString().padLeft(2, '0');
-    final minutes = ((seconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final secs = (seconds % 60).toString().padLeft(2, '0');
-    return "$hours:$minutes:$secs";
-  }
-
-  Widget _buildTextField(
-      TextEditingController controller, String label, IconData icon) {
-    return TextFormField(
-      controller: controller,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Este campo é obrigatório';
-        }
-        return null;
-      },
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.brown.shade800),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        prefixIcon: Icon(icon, color: Colors.brown.shade800),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -85,7 +31,6 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
   Future<void> _saveRecord() async {
     if (_seconds > 0 || finalTime.isNotEmpty) {
       if (_formKey.currentState!.validate()) {
-        // Validando o formulário
         String cutType = _cutTypeController.text;
         String operationName = _operationNameController.text;
         String calculatedTime = finalTime;
@@ -135,21 +80,14 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      'Registro de Tempo para Operações',
-                      style: TextStyle(
-                        color: Colors.brown.shade900,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    _buildTitle('Registro de Tempo para Operações'),
                     SizedBox(height: 20),
-                    _buildTextField(
+                    _buildTextFormField(
                         _cutTypeController, 'Tipo de Corte', Icons.crop_din),
                     SizedBox(height: 10),
-                    _buildTextField(_operationNameController,
+                    _buildTextFormField(_operationNameController,
                         'Nome da Operação', Icons.build),
                     SizedBox(height: 20),
                     Center(
@@ -160,7 +98,7 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
                         onStop: _stopTimer,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 10),
                     if (finalTime.isNotEmpty)
                       Text(
                         'Tempo calculado: $finalTime',
@@ -170,7 +108,7 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 10),
                     Center(
                       child: ElevatedButton(
                         onPressed: _saveRecord,
@@ -196,6 +134,72 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _startTimer() {
+    setState(() {
+      isTiming = true;
+      finalTime = "";
+      _seconds = 0;
+      elapsedTime = _formatElapsedTime(_seconds);
+    });
+
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _seconds++;
+        elapsedTime = _formatElapsedTime(_seconds);
+      });
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    setState(() {
+      isTiming = false;
+      finalTime = elapsedTime;
+      _seconds = 0;
+      elapsedTime = _formatElapsedTime(_seconds);
+    });
+  }
+
+  String _formatElapsedTime(int seconds) {
+    final hours = (seconds ~/ 3600).toString().padLeft(2, '0');
+    final minutes = ((seconds % 3600) ~/ 60).toString().padLeft(2, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+    return "$hours:$minutes:$secs";
+  }
+
+  Widget _buildTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+        color: Colors.brown.shade900,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  Widget _buildTextFormField(
+      TextEditingController controller, String label, IconData icon) {
+    return TextFormField(
+      controller: controller,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Este campo é obrigatório';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.brown.shade800),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        prefixIcon: Icon(icon, color: Colors.brown.shade800),
       ),
     );
   }

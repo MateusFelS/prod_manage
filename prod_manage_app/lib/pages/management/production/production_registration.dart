@@ -97,7 +97,7 @@ class _ProductionRegistrationPageState
       };
 
       try {
-        final cutRecordId = await _apiService.saveRegistroCorte(data);
+        final cutRecordId = await _apiService.saveCutRecord(data);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Registro salvo com sucesso!')),
         );
@@ -162,16 +162,9 @@ class _ProductionRegistrationPageState
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    'Preencha os dados abaixo *',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.brown.shade900,
-                    ),
-                  ),
+                  _buildTitle('Preencha os dados abaixo'),
                   SizedBox(height: 20.0),
                   _buildTextFormField(
                     _codeController,
@@ -288,10 +281,21 @@ class _ProductionRegistrationPageState
     );
   }
 
+  Widget _buildTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+        color: Colors.brown.shade900,
+      ),
+    );
+  }
+
   Widget _buildTextFormField(
     TextEditingController controller,
-    String labelText,
-    IconData iconData, {
+    String label,
+    IconData icon, {
     bool readOnly = false,
     TextInputType? keyboardType,
     VoidCallback? onTap,
@@ -304,11 +308,12 @@ class _ProductionRegistrationPageState
       onTap: onTap,
       validator: validator,
       decoration: InputDecoration(
-        labelText: labelText,
-        prefixIcon: Icon(iconData),
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.brown.shade800),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
+        prefixIcon: Icon(icon, color: Colors.brown.shade800),
       ),
     );
   }

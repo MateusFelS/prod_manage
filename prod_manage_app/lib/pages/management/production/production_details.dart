@@ -112,18 +112,9 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImage(),
+                  _buildTitle("Detalhes do Corte - ${widget.cut['code']}"),
                   SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      "Detalhes do Corte - ${widget.cut['code']}",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown.shade900,
-                      ),
-                    ),
-                  ),
+                  _buildImage(),
                   SizedBox(height: 20),
                   _buildDetailRow('Código', widget.cut['code']),
                   _buildDetailRow('Fornecedor', widget.cut['supplier']),
@@ -150,7 +141,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                   _buildStatusSwitch('Finalizado'),
                   SizedBox(height: 20),
                   Text(
-                    'Registros de Operação:',
+                    'Tipo de peça:',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.brown.shade900,
@@ -167,8 +158,8 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 20),
-                  _buildDetailRow('Tempo Total Calculado',
+                  SizedBox(height: 5),
+                  _buildDetailRow('Tempo Estimado:',
                       '${_totalTime.toStringAsFixed(2)} minutos'),
                   SizedBox(height: 20),
                   ElevatedButton(
@@ -197,10 +188,27 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     );
   }
 
+  Widget _buildTitle(String title) {
+    return Center(
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          color: Colors.brown.shade900,
+        ),
+      ),
+    );
+  }
+
   Widget _buildImage() {
     return Center(
       child: _imageBuffer == null
-          ? CircularProgressIndicator()
+          ? Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: 200,
+              child: Icon(Icons.image_not_supported, size: 170),
+            )
           : Container(
               width: MediaQuery.of(context).size.width * 0.8,
               height: 200,
@@ -242,6 +250,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
         Radio<String>(
           value: status,
           groupValue: _currentStatus,
+          activeColor: Colors.brown.shade800,
           onChanged: (String? value) {
             if (value != null) {
               setState(() {

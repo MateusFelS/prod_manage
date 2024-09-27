@@ -17,18 +17,44 @@ class _ReportsPageState extends State<ReportsPage> {
   List<dynamic> _employees = [];
   int? _selectedEmployeeId;
   Map<String, double> _employeePerformance = {};
+  List<dynamic> _roles = [];
+  int? _selectedRole;
+  Map<String, double> _rolePerformance = {};
 
   @override
   void initState() {
     super.initState();
     _fetchEmployees();
     _fetchPerformanceData();
+    _fetchRoles();
+  }
+
+  Future<void> _fetchRoles() async {
+    try {
+      List roles = await _apiService.fetchRoles();
+      if (!mounted) return;
+      setState(() {
+        _roles = roles;
+        if (_roles.isNotEmpty) {
+          _selectedRole = _roles[0]['id'];
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar('Erro ao carregar a lista de funções: $error');
+    }
+  }
+
+  List<dynamic> _getEmployeesForSelectedRole() {
+    return _employees.where((employee) {
+      return employee['roleId'] == _selectedRole;
+    }).toList();
   }
 
   Future<void> _fetchEmployees() async {
     try {
       List employees = await _apiService.fetchEmployees();
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
       setState(() {
         _employees = employees;
         if (_employees.isNotEmpty) {
@@ -37,7 +63,7 @@ class _ReportsPageState extends State<ReportsPage> {
         }
       });
     } catch (error) {
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
       _showSnackBar('Erro ao carregar a lista de funcionários: $error');
     }
   }
@@ -45,12 +71,98 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _fetchPerformanceData() async {
     try {
       List performances = await _apiService.fetchPerformanceData();
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
       _processPerformanceData(performances);
+      _processRolePerformanceData(performances);
     } catch (error) {
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
       _showSnackBar('Erro ao carregar os dados de desempenho: $error');
     }
+  }
+
+  void _processRolePerformanceData(List performances) {
+    Map<String, double> dailyProductionForRole = {};
+
+    List filteredEmployees = _getEmployeesForSelectedRole();
+
+    for (var performance in performances) {
+      if (filteredEmployees.any((e) => e['id'] == performance['employeeId'])) {
+        String date = performance['date'].split('T')[0];
+        int produced = performance['produced'];
+
+        print('Data processada: $date, Produzido: $produced');
+
+        dailyProductionForRole.update(date, (value) => value + produced,
+            ifAbsent: () => produced.toDouble());
+      }
+    }
+
+    setState(() {
+      _rolePerformance = dailyProductionForRole;
+    });
+  }
+
+  double _getMaxYValueForRolePerformance() {
+    return _rolePerformance.isEmpty
+        ? 10000
+        : _rolePerformance.values.reduce((a, b) => a > b ? a : b);
+  }
+
+  Widget _buildRoleLineChart(String title) {
+    if (_rolePerformance.isEmpty) {
+      return _buildEmptyChartContainer(title);
+    }
+
+    return _buildChartContainer(
+      title,
+      SizedBox(
+        height: 270,
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(show: true),
+            titlesData: FlTitlesData(
+              leftTitles: _buildSideTitles(),
+              rightTitles:
+                  AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: _buildBottomTitlesForRole(),
+            ),
+            borderData: FlBorderData(
+              show: true,
+              border: Border.all(color: Colors.grey, width: 1),
+            ),
+            lineBarsData: [
+              LineChartBarData(
+                spots: _buildRoleLineChartSpots(),
+                isCurved: true,
+                dotData: FlDotData(show: true),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.green.withOpacity(0.3),
+                ),
+              ),
+            ],
+            minY: 0,
+            maxY: _getMaxYValueForRolePerformance(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<FlSpot> _buildRoleLineChartSpots() {
+    List<FlSpot> spots = [];
+    var dates = _rolePerformance.keys.map(DateTime.parse).toList();
+    dates.sort();
+
+    for (int i = 0; i < dates.length; i++) {
+      String formattedDate =
+          "${dates[i].year}-${dates[i].month.toString().padLeft(2, '0')}-${dates[i].day.toString().padLeft(2, '0')}";
+      double value = _rolePerformance[formattedDate]!;
+      spots.add(FlSpot(i.toDouble(), value));
+    }
+
+    return spots;
   }
 
   void _processPerformanceData(List performances) {
@@ -209,6 +321,34 @@ class _ReportsPageState extends State<ReportsPage> {
             maxY: _getMaxYValue(),
           ),
         ),
+      ),
+    );
+  }
+
+  AxisTitles _buildBottomTitlesForRole() {
+    return AxisTitles(
+      sideTitles: SideTitles(
+        showTitles: true,
+        reservedSize: 40,
+        interval: 1,
+        getTitlesWidget: (value, meta) {
+          int index = value.toInt();
+          var sortedDates = _rolePerformance.keys.map(DateTime.parse).toList();
+          sortedDates.sort();
+
+          if (index >= 0 && index < sortedDates.length) {
+            var date = sortedDates[index];
+            return Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                '${date.day}/${date.month}',
+                style: TextStyle(fontSize: 10),
+              ),
+            );
+          } else {
+            return Text('');
+          }
+        },
       ),
     );
   }
@@ -410,7 +550,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Row(
               children: [
                 Text(
-                  'Seleciona um período:',
+                  'Selecione um período:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 SizedBox(width: 16),
@@ -460,6 +600,31 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
             SizedBox(height: 16),
             _buildLineChart('Produção Diária do Funcionário'),
+            Row(
+              children: [
+                Text(
+                  'Selecione uma Função:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                SizedBox(width: 16),
+                DropdownButton<int>(
+                  value: _selectedRole,
+                  items: _roles.map<DropdownMenuItem<int>>((role) {
+                    return DropdownMenuItem<int>(
+                      value: role['id'],
+                      child: Text(role['title']),
+                    );
+                  }).toList(),
+                  onChanged: (newRoleId) {
+                    setState(() {
+                      _selectedRole = newRoleId;
+                      _fetchPerformanceData();
+                    });
+                  },
+                ),
+              ],
+            ),
+            _buildRoleLineChart('Roupas Completas por Dia'),
           ],
         ),
       ),
