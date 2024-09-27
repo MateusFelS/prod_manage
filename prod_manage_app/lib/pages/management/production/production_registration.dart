@@ -73,7 +73,7 @@ class _ProductionRegistrationPageState
     }
   }
 
-  Future<void> _saveRegistroCorte() async {
+  Future<void> _saveCutRecord() async {
     if (_formKey.currentState!.validate()) {
       final String code = _codeController.text;
       final int pieceAmount = int.tryParse(_pieceAmountController.text) ?? 0;
@@ -257,7 +257,7 @@ class _ProductionRegistrationPageState
                     width: MediaQuery.of(context).size.width * .8,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _saveRegistroCorte,
+                      onPressed: _saveCutRecord,
                       child: Text('Salvar'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.brown.shade400,

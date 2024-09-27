@@ -45,12 +45,6 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
-  List<dynamic> _getEmployeesForSelectedRole() {
-    return _employees.where((employee) {
-      return employee['roleId'] == _selectedRole;
-    }).toList();
-  }
-
   Future<void> _fetchEmployees() async {
     try {
       List employees = await _apiService.fetchEmployees();
@@ -80,6 +74,12 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
+  List<dynamic> _getEmployeesForSelectedRole() {
+    return _employees.where((employee) {
+      return employee['roleId'] == _selectedRole;
+    }).toList();
+  }
+
   void _processRolePerformanceData(List performances) {
     Map<String, double> dailyProductionForRole = {};
 
@@ -102,13 +102,21 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
+  List<String> _generateDateRange() {
+    DateTime now = DateTime.now();
+    return List.generate(7, (index) {
+      DateTime date = now.subtract(Duration(days: index));
+      return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    }).reversed.toList();
+  }
+
   double _getMaxYValueForRolePerformance() {
     return _rolePerformance.isEmpty
         ? 10000
         : _rolePerformance.values.reduce((a, b) => a > b ? a : b);
   }
 
-  Widget _buildRoleLineChart(String title) {
+  Widget _buildBarChart(String title) {
     if (_rolePerformance.isEmpty) {
       return _buildEmptyChartContainer(title);
     }
@@ -117,8 +125,8 @@ class _ReportsPageState extends State<ReportsPage> {
       title,
       SizedBox(
         height: 270,
-        child: LineChart(
-          LineChartData(
+        child: BarChart(
+          BarChartData(
             gridData: FlGridData(show: true),
             titlesData: FlTitlesData(
               leftTitles: _buildSideTitles(),
@@ -131,17 +139,7 @@ class _ReportsPageState extends State<ReportsPage> {
               show: true,
               border: Border.all(color: Colors.grey, width: 1),
             ),
-            lineBarsData: [
-              LineChartBarData(
-                spots: _buildRoleLineChartSpots(),
-                isCurved: true,
-                dotData: FlDotData(show: true),
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: Colors.green.withOpacity(0.3),
-                ),
-              ),
-            ],
+            barGroups: _buildBarChartGroups(),
             minY: 0,
             maxY: _getMaxYValueForRolePerformance(),
           ),
@@ -150,19 +148,29 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  List<FlSpot> _buildRoleLineChartSpots() {
-    List<FlSpot> spots = [];
-    var dates = _rolePerformance.keys.map(DateTime.parse).toList();
-    dates.sort();
+  List<BarChartGroupData> _buildBarChartGroups() {
+    List<BarChartGroupData> barGroups = [];
+    List<String> dateRange = _generateDateRange();
 
-    for (int i = 0; i < dates.length; i++) {
-      String formattedDate =
-          "${dates[i].year}-${dates[i].month.toString().padLeft(2, '0')}-${dates[i].day.toString().padLeft(2, '0')}";
-      double value = _rolePerformance[formattedDate]!;
-      spots.add(FlSpot(i.toDouble(), value));
+    for (int i = 0; i < dateRange.length; i++) {
+      String date = dateRange[i];
+      double value = _rolePerformance[date] ?? 0.0;
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: value,
+              color: const Color.fromARGB(255, 76, 175, 142),
+              width: 20,
+              borderRadius: BorderRadius.circular(0),
+            ),
+          ],
+        ),
+      );
     }
 
-    return spots;
+    return barGroups;
   }
 
   void _processPerformanceData(List performances) {
@@ -189,7 +197,7 @@ class _ReportsPageState extends State<ReportsPage> {
     int belowAverageCount = 0;
 
     DateTime now = DateTime.now();
-    int daysBack = _getDaysBackForPeriod(_selectedPeriod);
+    int daysBack = 7;
     DateTime startDate = now.subtract(Duration(days: daysBack));
 
     employeeGroupedPerformances.forEach((employeeId, dailyPerformances) {
@@ -251,34 +259,13 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
-  int _getDaysBackForPeriod(String selectedPeriod) {
-    switch (selectedPeriod) {
-      case '7 Dias':
-        return 7;
-      case '15 Dias':
-        return 15;
-      case '30 Dias':
-        return 30;
-      default:
-        return 30;
-    }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   List<FlSpot> _buildLineChartSpots() {
     List<FlSpot> spots = [];
-    var dates = _employeePerformance.keys.map(DateTime.parse).toList();
-    dates.sort();
+    List<String> dateRange = _generateDateRange();
 
-    for (int i = 0; i < dates.length; i++) {
-      String formattedDate =
-          "${dates[i].year}-${dates[i].month.toString().padLeft(2, '0')}-${dates[i].day.toString().padLeft(2, '0')}";
-      double value = _employeePerformance[formattedDate]!;
+    for (int i = 0; i < dateRange.length; i++) {
+      String date = dateRange[i];
+      double value = _employeePerformance[date] ?? 0.0;
       spots.add(FlSpot(i.toDouble(), value));
     }
 
@@ -333,11 +320,10 @@ class _ReportsPageState extends State<ReportsPage> {
         interval: 1,
         getTitlesWidget: (value, meta) {
           int index = value.toInt();
-          var sortedDates = _rolePerformance.keys.map(DateTime.parse).toList();
-          sortedDates.sort();
+          List<String> dateRange = _generateDateRange();
 
-          if (index >= 0 && index < sortedDates.length) {
-            var date = sortedDates[index];
+          if (index >= 0 && index < dateRange.length) {
+            var date = DateTime.parse(dateRange[index]);
             return Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(
@@ -361,12 +347,10 @@ class _ReportsPageState extends State<ReportsPage> {
         interval: 1,
         getTitlesWidget: (value, meta) {
           int index = value.toInt();
-          var sortedDates =
-              _employeePerformance.keys.map(DateTime.parse).toList();
-          sortedDates.sort();
+          List<String> dateRange = _generateDateRange();
 
-          if (index >= 0 && index < sortedDates.length) {
-            var date = sortedDates[index];
+          if (index >= 0 && index < dateRange.length) {
+            var date = DateTime.parse(dateRange[index]);
             return Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(
@@ -538,6 +522,12 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -624,7 +614,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
               ],
             ),
-            _buildRoleLineChart('Roupas Completas por Dia'),
+            _buildBarChart('Roupas Completas por Dia'),
           ],
         ),
       ),

@@ -25,6 +25,12 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
     _fetchRoles();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchRoles() async {
     try {
       final roles = await _apiService.fetchRoles();
@@ -40,7 +46,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
     }
   }
 
-  void _saveRegistroFuncionario() async {
+  void _saveEmployeeRegistration() async {
     if (_formKey.currentState!.validate()) {
       final String name = _nameController.text;
 
@@ -54,12 +60,12 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
 
       final response = await _apiService.postEmployee(data);
 
-      if (response != null && response.statusCode == 201) {
+      if (response.statusCode == 201) {
         Navigator.pop(context);
         _showSnackBar('Funcionário salvo com sucesso!');
       } else {
         _showSnackBar(
-            'Erro ao salvar funcionário: ${response?.reasonPhrase ?? 'Erro desconhecido'}');
+            'Erro ao salvar funcionário: ${response.reasonPhrase ?? 'Erro desconhecido'}');
       }
     } else {
       _showSnackBar('Por favor, preencha todos os campos obrigatórios');
@@ -163,7 +169,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
                         width: MediaQuery.of(context).size.width * .8,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _saveRegistroFuncionario,
+                          onPressed: _saveEmployeeRegistration,
                           child: Text('Salvar'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.brown.shade400,
@@ -273,11 +279,5 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
   }
 }

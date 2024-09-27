@@ -27,11 +27,11 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   void initState() {
     super.initState();
     _currentStatus = widget.cut['status'];
-    _loadImageFromDatabase();
+    _loadImage();
     _loadOperationRecords();
   }
 
-  Future<void> _loadImageFromDatabase() async {
+  Future<void> _loadImage() async {
     try {
       final image = await _apiService.getImage(widget.cut['id']);
       setState(() {

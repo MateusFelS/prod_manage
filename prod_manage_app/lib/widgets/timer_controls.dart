@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 class TimerControls extends StatelessWidget {
   final bool isTiming;
   final String elapsedTime;
-  final VoidCallback?
-      onStart; // Pode ser nulo, desabilitando o botão de "Iniciar"
+  final VoidCallback? onStart;
   final VoidCallback onStop;
 
   TimerControls({
     required this.isTiming,
     required this.elapsedTime,
-    this.onStart, // Tornar opcional (nulo) para controlar a desativação
+    this.onStart,
     required this.onStop,
   });
 
@@ -23,12 +22,10 @@ class TimerControls extends StatelessWidget {
 
   Widget _buildStartButton(BuildContext context) {
     return ElevatedButton(
-      onPressed: onStart, // O botão só será clicável se onStart não for nulo
+      onPressed: onStart,
       child: Text('Cronometrar'),
       style: ElevatedButton.styleFrom(
-        backgroundColor: onStart != null
-            ? Colors.brown.shade400
-            : Colors.grey, // Alterar cor quando desabilitado
+        backgroundColor: onStart != null ? Colors.brown.shade400 : Colors.grey,
         foregroundColor: Colors.white,
         textStyle: TextStyle(
           fontSize: 16,

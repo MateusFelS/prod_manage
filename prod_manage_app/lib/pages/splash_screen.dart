@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Prod Manage',
+                'ProdManage',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 32,

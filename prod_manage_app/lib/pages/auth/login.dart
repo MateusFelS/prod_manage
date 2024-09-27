@@ -13,11 +13,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   final ApiService _apiService = ApiService();
 
-  Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _handleLogin() async {
+    _setLoadingState(true);
     try {
       final users = await _apiService.fetchUsers();
       final token = _tokenController.text;
@@ -28,24 +25,33 @@ class _LoginPageState extends State<LoginPage> {
         orElse: () => null,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoadingState(false);
 
       if (user != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isLoggedIn', true);
-
-        Navigator.pushReplacementNamed(context, '/home');
+        await _saveLoginState();
+        _navigateToHome();
       } else {
         _showErrorDialog('Token ou senha incorretos.');
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      _setLoadingState(false);
       _showErrorDialog('Erro ao conectar ao servidor: $e');
     }
+  }
+
+  Future<void> _saveLoginState() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true);
+  }
+
+  void _setLoadingState(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+  }
+
+  void _navigateToHome() {
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   void _showErrorDialog(String message) {
@@ -60,6 +66,51 @@ class _LoginPageState extends State<LoginPage> {
             child: Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: Colors.brown.shade800),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: Colors.brown.shade800,
+        ),
+      ),
+      obscureText: obscureText,
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * .8,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _handleLogin,
+        child: Text('Entrar'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.brown.shade400,
+          foregroundColor: Colors.brown.shade50,
+          textStyle: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       ),
     );
   }
@@ -96,34 +147,16 @@ class _LoginPageState extends State<LoginPage> {
                     width: 100,
                   ),
                   SizedBox(height: 16),
-                  TextField(
+                  _buildTextField(
                     controller: _tokenController,
-                    decoration: InputDecoration(
-                      labelText: 'Token',
-                      labelStyle: TextStyle(color: Colors.brown.shade800),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.token,
-                        color: Colors.brown.shade800,
-                      ),
-                    ),
+                    labelText: 'Token',
+                    icon: Icons.token,
                   ),
                   SizedBox(height: 16),
-                  TextField(
+                  _buildTextField(
                     controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Senha',
-                      labelStyle: TextStyle(color: Colors.brown.shade800),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.lock,
-                        color: Colors.brown.shade800,
-                      ),
-                    ),
+                    labelText: 'Senha',
+                    icon: Icons.lock,
                     obscureText: true,
                   ),
                   SizedBox(height: 24),
@@ -133,25 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                             Colors.brown.shade800,
                           ),
                         )
-                      : SizedBox(
-                          width: MediaQuery.of(context).size.width * .8,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: _login,
-                            child: Text('Entrar'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.brown.shade400,
-                              foregroundColor: Colors.brown.shade50,
-                              textStyle: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
+                      : _buildLoginButton(),
                 ],
               ),
             ),

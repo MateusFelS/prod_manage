@@ -132,17 +132,17 @@ class _PerformancePageState extends State<PerformancePage> {
     int totalProduced = 0, totalTarget100 = 0, totalTarget70 = 0;
 
     for (var entry in performanceData) {
-      final rendimento = int.tryParse(entry['Rendimento'] ?? '0') ?? 0;
+      final performance = int.tryParse(entry['Rendimento'] ?? '0') ?? 0;
       final target100 = int.tryParse(entry['100%'] ?? '0') ?? 0;
       final target70 = int.tryParse(entry['70%'] ?? '0') ?? 0;
 
-      totalProduced += rendimento;
+      totalProduced += performance;
       totalTarget100 += target100;
       totalTarget70 += target70;
     }
 
     String overallEfficiency =
-        _calculateRendimento(totalProduced, totalTarget70);
+        _calculatePerformance(totalProduced, totalTarget70);
 
     return {
       'piecesMade': totalProduced,
@@ -183,7 +183,7 @@ class _PerformancePageState extends State<PerformancePage> {
         performanceData[currentRow]['100%'] = produced.toString();
         performanceData[currentRow]['70%'] = target70.toString();
         performanceData[currentRow]['Rendimento'] =
-            _calculateRendimento(produced, target70);
+            _calculatePerformance(produced, target70);
 
         currentRow++;
       }
@@ -262,8 +262,8 @@ class _PerformancePageState extends State<PerformancePage> {
     );
   }
 
-  String _calculateRendimento(int rendimento, int avgTarget70) {
-    return rendimento >= avgTarget70 ? 'Aceitável' : 'Insuficiente';
+  String _calculatePerformance(int performance, int avgTarget70) {
+    return performance >= avgTarget70 ? 'Aceitável' : 'Insuficiente';
   }
 
   String _formatTime(Duration duration) {
@@ -299,7 +299,7 @@ class _PerformancePageState extends State<PerformancePage> {
     );
   }
 
-  void _handleRendimentoChanged(int index, String value) {
+  void _handlePerformanceChanged(int index, String value) {
     setState(() {
       performanceData[index]['Rendimento'] = value;
     });
@@ -343,7 +343,7 @@ class _PerformancePageState extends State<PerformancePage> {
                 child: PerformanceTable(
                   timeSlots: timeSlots,
                   performanceData: performanceData,
-                  onRendimentoChanged: _handleRendimentoChanged,
+                  onPerformanceChanged: _handlePerformanceChanged,
                   onMetaChanged: _handleMetaChanged,
                 ),
               ),

@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class PerformanceTable extends StatefulWidget {
   final List<String> timeSlots;
   final List<Map<String, String>> performanceData;
-  final Function(int, String) onRendimentoChanged;
+  final Function(int, String) onPerformanceChanged;
   final Function(int, String, String) onMetaChanged;
 
   PerformanceTable({
     required this.timeSlots,
     required this.performanceData,
-    required this.onRendimentoChanged,
+    required this.onPerformanceChanged,
     required this.onMetaChanged,
   });
 
@@ -144,7 +144,7 @@ class _PerformanceTableState extends State<PerformanceTable> {
   }
 
   Widget _buildEditableTableCell(int index) {
-    final rendimento = widget.performanceData[index]['Rendimento'] ?? '0';
+    final performance = widget.performanceData[index]['Rendimento'] ?? '0';
     final meta70 =
         double.tryParse(widget.performanceData[index]['70%'] ?? '0') ?? 0;
 
@@ -153,10 +153,10 @@ class _PerformanceTableState extends State<PerformanceTable> {
       child: TextField(
         keyboardType: TextInputType.number,
         onChanged: (value) {
-          widget.onRendimentoChanged(index, value);
+          widget.onPerformanceChanged(index, value);
         },
         style: TextStyle(
-          color: rendimentoColor(rendimento, meta70),
+          color: performanceColor(performance, meta70),
         ),
         textAlign: TextAlign.center,
         decoration: InputDecoration(
@@ -194,9 +194,9 @@ class _PerformanceTableState extends State<PerformanceTable> {
     );
   }
 
-  Color rendimentoColor(String rendimento, double meta70) {
-    final rendimentoValue = double.tryParse(rendimento) ?? 0.0;
-    if (rendimentoValue >= meta70) {
+  Color performanceColor(String performance, double meta70) {
+    final performanceValue = double.tryParse(performance) ?? 0.0;
+    if (performanceValue >= meta70) {
       return Colors.green;
     } else {
       return Colors.red;

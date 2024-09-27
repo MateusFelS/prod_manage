@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomePage(),
         '/register_production': (context) => ProductionRegistrationPage(),
         '/production_list': (context) => ProductionListPage(),
-        '/operations': (context) => CutTimerScreen(),
+        '/operations': (context) => OperationPage(),
         '/register_employee': (context) => RegisterEmployeePage(),
         '/employee_list': (context) => EmployeeListPage(),
         '/reports': (context) => ReportsPage(),

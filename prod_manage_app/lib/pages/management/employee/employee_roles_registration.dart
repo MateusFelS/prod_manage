@@ -16,6 +16,13 @@ class _EmployeeRoleRegistrationPageState
 
   final ApiService _apiService = ApiService();
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   void _saveRole() async {
     if (_formKey.currentState!.validate()) {
       final String title = _titleController.text;
@@ -129,12 +136,5 @@ class _EmployeeRoleRegistrationPageState
             }
           : null,
     );
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
   }
 }
