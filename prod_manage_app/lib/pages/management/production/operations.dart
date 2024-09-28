@@ -3,18 +3,18 @@ import 'package:prod_manage/services/api_service.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
 import 'dart:async';
 
-class CutTimerScreen extends StatefulWidget {
+class OperationPage extends StatefulWidget {
   @override
-  _CutTimerScreenState createState() => _CutTimerScreenState();
+  _OperationPageState createState() => _OperationPageState();
 }
 
-class _CutTimerScreenState extends State<CutTimerScreen> {
+class _OperationPageState extends State<OperationPage> {
   bool isTiming = false;
   String elapsedTime = "00:00:00";
   String finalTime = "";
   Timer? _timer;
   int _seconds = 0;
-  final TextEditingController _cutTypeController = TextEditingController();
+
   final TextEditingController _operationNameController =
       TextEditingController();
   final ApiService _apiService = ApiService();
@@ -23,7 +23,7 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _cutTypeController.dispose();
+
     _operationNameController.dispose();
     super.dispose();
   }
@@ -31,12 +31,10 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
   Future<void> _saveRecord() async {
     if (_seconds > 0 || finalTime.isNotEmpty) {
       if (_formKey.currentState!.validate()) {
-        String cutType = _cutTypeController.text;
         String operationName = _operationNameController.text;
         String calculatedTime = finalTime;
 
         final Map<String, dynamic> data = {
-          "cutType": cutType,
           "operationName": operationName,
           "calculatedTime": calculatedTime,
         };
@@ -84,20 +82,8 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
                   children: [
                     _buildTitle('Registro de Tempo para Operações'),
                     SizedBox(height: 20),
-                    _buildTextFormField(
-                        _cutTypeController, 'Tipo de Corte', Icons.crop_din),
-                    SizedBox(height: 10),
                     _buildTextFormField(_operationNameController,
                         'Nome da Operação', Icons.build),
-                    SizedBox(height: 20),
-                    Center(
-                      child: TimerControls(
-                        isTiming: isTiming,
-                        elapsedTime: elapsedTime,
-                        onStart: _startTimer,
-                        onStop: _stopTimer,
-                      ),
-                    ),
                     SizedBox(height: 10),
                     if (finalTime.isNotEmpty)
                       Text(
@@ -110,9 +96,39 @@ class _CutTimerScreenState extends State<CutTimerScreen> {
                       ),
                     SizedBox(height: 10),
                     Center(
+                      child: TimerControls(
+                        isTiming: isTiming,
+                        elapsedTime: elapsedTime,
+                        onStart: _startTimer,
+                        onStop: _stopTimer,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Center(
                       child: ElevatedButton(
                         onPressed: _saveRecord,
-                        child: Text('Salvar Registro'),
+                        child: Text('Salvar Operação'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.brown.shade400,
+                          foregroundColor: Colors.white,
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          fixedSize:
+                              Size(MediaQuery.of(context).size.width * .8, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/operation-set'),
+                        child: Text('Criar Conjunto de Operações'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.brown.shade400,
                           foregroundColor: Colors.white,

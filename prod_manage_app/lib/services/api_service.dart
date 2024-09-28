@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class ApiService {
-  final String _baseUrl = 'https://prod-manage.onrender.com';
+  final String _baseUrl = 'http://192.168.1.2:3000';
+  //final String _baseUrl = 'https://prod-manage.onrender.com';
   final Map<String, String> _jsonHeaders = {'Content-Type': 'application/json'};
 
   // Helper methods to handle responses
@@ -50,6 +51,20 @@ class ApiService {
     }
   }
 
+  // Generic Patch method
+  Future<http.Response> _patchRequest(
+      String endpoint, Map<String, dynamic> data) async {
+    final url = Uri.parse('$_baseUrl/$endpoint');
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    return response;
+  }
+
   // Users API
   Future<List<dynamic>> fetchUsers() async {
     return _getRequest('users');
@@ -66,7 +81,7 @@ class ApiService {
 
   Future<void> updateStatus(int cutId, String status) async {
     final response =
-        await _postRequest('cut-records/$cutId', {'status': status});
+        await _patchRequest('cut-records/$cutId', {'status': status});
     await _processVoidResponse(response);
   }
 
@@ -138,6 +153,35 @@ class ApiService {
         'calculatedTime': operationRecord['calculatedTime'],
       } as Map<String, dynamic>;
     }).toList();
+  }
+
+  // Operation Set API
+  Future<List<dynamic>> fetchOperationSets() async {
+    return _getRequest('operation-set');
+  }
+
+  Future<void> saveOperationSet(Map<String, dynamic> operationsSet) async {
+    final url = Uri.parse('$_baseUrl/operation-set');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(operationsSet),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Conjunto de operações salvo com sucesso');
+      } else {
+        throw Exception(
+            'Erro ao salvar o conjunto de operações: ${response.body}');
+      }
+    } catch (e) {
+      print('Erro na requisição: $e');
+      throw Exception('Falha ao salvar o conjunto de operações.');
+    }
   }
 
   // Performance API

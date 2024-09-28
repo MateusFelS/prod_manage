@@ -20,8 +20,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   String _currentStatus = '';
   Uint8List? _imageBuffer;
   List<Map<String, dynamic>> _operationRecords = [];
-  Map<String, dynamic>? _selectedOperationRecord;
-  double _totalTime = 0.0;
 
   @override
   void initState() {
@@ -62,20 +60,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     final seconds = double.tryParse(parts[2]) ?? 0.0;
 
     return hours * 60 + minutes + (seconds / 60);
-  }
-
-  void _onOperationRecordSelected(Map<String, dynamic>? record) {
-    setState(() {
-      _selectedOperationRecord = record;
-      if (record != null) {
-        final timeString = record['calculatedTime'] ?? '00:00:00';
-        final timeInMinutes = _convertTimeStringToMinutes(timeString);
-        final quantity = (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
-        _totalTime = timeInMinutes * quantity;
-      } else {
-        _totalTime = 0.0;
-      }
-    });
   }
 
   Future<void> _updateStatus() async {
@@ -127,7 +111,17 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                       widget.cut['pieceAmount'].toString()),
                   _buildDetailRow(
                       'Data Limite', _formatDate(widget.cut['limiteDate'])),
-                  SizedBox(height: 20),
+                  SizedBox(height: 10),
+                  Text(
+                    'Operação:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade900,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  _buildOperationList(),
+                  SizedBox(height: 10),
                   Text(
                     'Status:',
                     style: TextStyle(
@@ -139,28 +133,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                   _buildStatusSwitch('Pausado'),
                   _buildStatusSwitch('Adiado'),
                   _buildStatusSwitch('Finalizado'),
-                  SizedBox(height: 20),
-                  Text(
-                    'Tipo de peça:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown.shade900,
-                    ),
-                  ),
-                  DropdownButton<Map<String, dynamic>>(
-                    value: _selectedOperationRecord,
-                    hint: Text('Selecione um registro'),
-                    onChanged: _onOperationRecordSelected,
-                    items: _operationRecords.map((record) {
-                      return DropdownMenuItem<Map<String, dynamic>>(
-                        value: record,
-                        child: Text('${record['operationName']}'),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 5),
-                  _buildDetailRow('Tempo Estimado:',
-                      '${_totalTime.toStringAsFixed(2)} minutos'),
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _updateStatus,
@@ -267,6 +239,40 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOperationList() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(width: 2, color: Colors.brown.shade400),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: _operationRecords.length,
+        itemBuilder: (context, index) {
+          final record = _operationRecords[index];
+          final timeString = record['calculatedTime'] ?? '00:00:00';
+          final timeInMinutes = _convertTimeStringToMinutes(timeString);
+          final quantity =
+              (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
+          final totalTime = timeInMinutes * quantity;
+
+          return ListTile(
+            title: Text(
+              '${record['operationName']}',
+              style: TextStyle(
+                  color: Colors.brown.shade800, fontWeight: FontWeight.bold),
+            ),
+            trailing: Text(
+              '${totalTime.toStringAsFixed(2)} min',
+              style: TextStyle(color: Colors.brown.shade800),
+            ),
+          );
+        },
+      ),
     );
   }
 

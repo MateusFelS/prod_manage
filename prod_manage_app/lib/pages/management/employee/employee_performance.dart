@@ -66,12 +66,10 @@ class _PerformancePageState extends State<PerformancePage> {
 
   Future<void> _fetchCutRecords() async {
     try {
-      final records = await apiService.fetchCutRecords(widget.employee['id']);
+      final records = await apiService.fetchAllCutRecords();
       if (mounted) {
         setState(() {
-          _cutRecords = records
-              .where((record) => record['employeeId'] == widget.employee['id'])
-              .toList();
+          _cutRecords = records;
         });
       }
     } catch (e) {

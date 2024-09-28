@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:prod_manage/services/api_service.dart';
-
 import 'package:prod_manage/widgets/app_bar.dart';
 
 class ProductionRegistrationPage extends StatefulWidget {
@@ -25,20 +24,21 @@ class _ProductionRegistrationPageState
 
   final ApiService _apiService = ApiService();
 
-  List<dynamic> _employees = [];
-  int? _selectedEmployeeId;
+  List<dynamic> _operations = [];
+  int? _selectedOperationId;
 
   @override
   void initState() {
     super.initState();
-    _fetchEmployees();
+    _fetchOperations();
   }
 
-  Future<void> _fetchEmployees() async {
+  Future<void> _fetchOperations() async {
     try {
-      final employees = await _apiService.fetchEmployees();
+      final operations = await _apiService.fetchOperationSets();
+      print('Operações recebidas: $operations');
       setState(() {
-        _employees = employees;
+        _operations = operations;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,6 +84,10 @@ class _ProductionRegistrationPageState
       final String status = "Em progresso";
       final DateTime? limiteDate = _limiteDate;
 
+      List<dynamic> selectedOperations = _operations
+          .where((operation) => operation['id'] == _selectedOperationId)
+          .toList();
+
       final Map<String, dynamic> data = {
         "code": code,
         "pieceAmount": pieceAmount,
@@ -93,7 +97,7 @@ class _ProductionRegistrationPageState
         "comment": comment,
         "supplier": supplier,
         "status": status,
-        "employeeId": _selectedEmployeeId,
+        "selectedOperations": selectedOperations,
       };
 
       try {
@@ -209,17 +213,17 @@ class _ProductionRegistrationPageState
                   ),
                   SizedBox(height: 16.0),
                   DropdownButtonFormField<int>(
-                    value: _selectedEmployeeId,
-                    hint: Text('Selecione o Funcionário *'),
+                    value: _selectedOperationId,
+                    hint: Text('Selecione a Operação *'),
                     onChanged: (int? newValue) {
                       setState(() {
-                        _selectedEmployeeId = newValue;
+                        _selectedOperationId = newValue;
                       });
                     },
-                    items: _employees.map<DropdownMenuItem<int>>((employee) {
+                    items: _operations.map<DropdownMenuItem<int>>((operation) {
                       return DropdownMenuItem<int>(
-                        value: employee['id'],
-                        child: Text(employee['name']),
+                        value: operation['id'],
+                        child: Text(operation['setName']),
                       );
                     }).toList(),
                     validator: _dropdownValidator,
@@ -281,54 +285,47 @@ class _ProductionRegistrationPageState
     );
   }
 
-  Widget _buildTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 20,
-        color: Colors.brown.shade900,
-      ),
-    );
-  }
-
   Widget _buildTextFormField(
     TextEditingController controller,
     String label,
     IconData icon, {
     bool readOnly = false,
-    TextInputType? keyboardType,
-    VoidCallback? onTap,
-    FormFieldValidator<String>? validator,
+    TextInputType keyboardType = TextInputType.text,
+    void Function()? onTap,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
       keyboardType: keyboardType,
-      onTap: onTap,
-      validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.brown.shade800),
+        prefixIcon: Icon(icon, color: Colors.brown.shade800),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        prefixIcon: Icon(icon, color: Colors.brown.shade800),
       ),
+      onTap: onTap,
+      validator: validator,
     );
   }
 
   String? _notEmptyValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Campo obrigatório';
-    }
-    return null;
+    return (value == null || value.isEmpty) ? 'Campo obrigatório' : null;
   }
 
   String? _dropdownValidator(int? value) {
-    if (value == null) {
-      return 'Selecione um funcionário';
-    }
-    return null;
+    return (value == null) ? 'Selecione uma operação' : null;
+  }
+
+  Widget _buildTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 20.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.brown.shade800,
+      ),
+    );
   }
 }

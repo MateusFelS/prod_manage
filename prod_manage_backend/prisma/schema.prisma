@@ -8,36 +8,40 @@ generator client {
 }
 
 model User {
-  id                 Int           @id @default(autoincrement())
-  token              String        @unique
-  password           String
-  name               String
+  id       Int    @id @default(autoincrement())
+  token    String @unique
+  password String
+  name     String
 }
 
 model CutRecord {
-  id           Int       @id @default(autoincrement())
-  code         String
-  pieceAmount  Int
-  line1        String
-  line2        String
-  limiteDate   DateTime
-  comment      String?  
-  supplier     String
-  status       String   @default("in progress") 
-  image        Bytes?  
-  createdAt    DateTime @default(now())  
-  updatedAt    DateTime @default(now()) @updatedAt  
-  employeeId   Int?     
-  employee     Employee? @relation("EmployeeCutRecords", fields: [employeeId], references: [id], onDelete: SetNull)
+  id             Int          @id @default(autoincrement())
+  code           String
+  pieceAmount    Int
+  line1          String
+  line2          String
+  limiteDate     DateTime
+  comment        String?  
+  supplier       String
+  status         String       @default("in progress")
+  selectedOperations Json? 
+  image          Bytes?  
+  createdAt      DateTime     @default(now())  
+  updatedAt      DateTime     @default(now()) @updatedAt  
 }
-
 
 model OperationRecord {
   id             Int      @id @default(autoincrement())
-  cutType        String   
   operationName  String   
   calculatedTime String  
-  createdAt      DateTime @default(now())  
+  createdAt      DateTime @default(now())
+}
+
+model OperationSet {
+  id              Int               @id @default(autoincrement())
+  setName         String            // Nome do conjunto de operações
+  createdAt       DateTime          @default(now())
+  operationRecords Json     
 }
 
 model Employee {
@@ -47,9 +51,8 @@ model Employee {
   entryDate    DateTime
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
-  cutRecords   CutRecord[] @relation("EmployeeCutRecords")
   performances Performance[] 
-  role         Role       @relation(fields: [roleId], references: [id])
+  role         Role        @relation(fields: [roleId], references: [id])
 }
 
 model Role {
