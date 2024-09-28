@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class ApiService {
-  final String _baseUrl = 'http://192.168.1.2:3000';
-  //final String _baseUrl = 'https://prod-manage.onrender.com';
+  final String _baseUrl = 'https://prod-manage-backend.onrender.com';
   final Map<String, String> _jsonHeaders = {'Content-Type': 'application/json'};
 
   // Helper methods to handle responses
@@ -68,6 +67,23 @@ class ApiService {
   // Users API
   Future<List<dynamic>> fetchUsers() async {
     return _getRequest('users');
+  }
+
+  Future<http.Response> registerUser(Map<String, dynamic> data) async {
+    final url = Uri.parse(
+        '$_baseUrl/users'); // Supondo que o endpoint para registro seja /users
+    final headers = {'Content-Type': 'application/json'};
+
+    final body = jsonEncode(data); // Converte o Map para JSON
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      // Retorna a resposta para ser tratada na página
+      return response;
+    } catch (e) {
+      throw Exception('Erro ao conectar à API: $e');
+    }
   }
 
   // CutRecords API
