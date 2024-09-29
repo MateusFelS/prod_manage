@@ -37,13 +37,18 @@ class _ProductionRegistrationPageState
     try {
       final operations = await _apiService.fetchOperationSets();
       print('Operações recebidas: $operations');
-      setState(() {
-        _operations = operations;
-      });
+
+      if (mounted) {
+        setState(() {
+          _operations = operations;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 

@@ -42,9 +42,18 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
 
   Future<void> _loadOperationRecords() async {
     try {
-      final records = await _apiService.fetchOperationRecords();
+      final selectedOperations =
+          widget.cut['selectedOperations'] as List<dynamic>;
+
+      List<Map<String, dynamic>> allOperationRecords = [];
+      for (var set in selectedOperations) {
+        final operationRecords = set['operationRecords'] as List<dynamic>;
+        allOperationRecords
+            .addAll(operationRecords.cast<Map<String, dynamic>>());
+      }
+
       setState(() {
-        _operationRecords = records;
+        _operationRecords = allOperationRecords;
       });
     } catch (e) {
       print("Erro ao carregar os registros de operação: $e");
@@ -243,35 +252,40 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   }
 
   Widget _buildOperationList() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(width: 2, color: Colors.brown.shade400),
+    return Card(
+      elevation: 4,
+      color: Colors.brown.shade100,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: _operationRecords.length,
-        itemBuilder: (context, index) {
-          final record = _operationRecords[index];
-          final timeString = record['calculatedTime'] ?? '00:00:00';
-          final timeInMinutes = _convertTimeStringToMinutes(timeString);
-          final quantity =
-              (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
-          final totalTime = timeInMinutes * quantity;
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: _operationRecords.length,
+          itemBuilder: (context, index) {
+            final record = _operationRecords[index];
+            final timeString = record['calculatedTime'] ?? '00:00:00';
+            final timeInMinutes = _convertTimeStringToMinutes(timeString);
+            final quantity =
+                (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
+            final totalTime = timeInMinutes * quantity;
 
-          return ListTile(
-            title: Text(
-              '${record['operationName']}',
-              style: TextStyle(
-                  color: Colors.brown.shade800, fontWeight: FontWeight.bold),
-            ),
-            trailing: Text(
-              '${totalTime.toStringAsFixed(2)} min',
-              style: TextStyle(color: Colors.brown.shade800),
-            ),
-          );
-        },
+            return ListTile(
+              title: Text(
+                '${record['operationName']}',
+                style: TextStyle(
+                    color: Colors.brown.shade800, fontWeight: FontWeight.bold),
+              ),
+              trailing: Text(
+                '${totalTime.toStringAsFixed(2)} min',
+                style: TextStyle(
+                    color: Colors.brown.shade800, fontWeight: FontWeight.bold),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

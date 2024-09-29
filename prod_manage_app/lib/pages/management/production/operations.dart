@@ -103,45 +103,35 @@ class _OperationPageState extends State<OperationPage> {
                         onStop: _stopTimer,
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _saveRecord,
-                        child: Text('Salvar Operação'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade400,
-                          foregroundColor: Colors.white,
-                          textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                    SizedBox(height: 20),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.brown.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4.0,
+                            offset: Offset(0, 2),
                           ),
-                          fixedSize:
-                              Size(MediaQuery.of(context).size.width * .8, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/operation-set'),
-                        child: Text('Criar Conjunto de Operações'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade400,
-                          foregroundColor: Colors.white,
-                          textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildButtonWithIcon(
+                            icon: Icons.save,
+                            label: 'Salvar',
+                            onPressed: _saveRecord,
                           ),
-                          fixedSize:
-                              Size(MediaQuery.of(context).size.width * .8, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          _buildButtonWithIcon(
+                            icon: Icons.add,
+                            label: 'Criar Conjunto',
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/operation-set'),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
@@ -151,6 +141,38 @@ class _OperationPageState extends State<OperationPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildButtonWithIcon({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ElevatedButton(
+          onPressed: onPressed,
+          child: Icon(icon, size: 30),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.brown.shade400,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: EdgeInsets.all(16),
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.brown.shade900,
+          ),
+        ),
+      ],
     );
   }
 

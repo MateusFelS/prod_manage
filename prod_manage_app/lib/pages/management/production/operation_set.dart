@@ -140,19 +140,24 @@ class _OperationSetPageState extends State<OperationSetPage> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: availableOperations.length,
-                    itemBuilder: (context, index) {
-                      Map<String, dynamic> operation =
-                          availableOperations[index];
-                      return CheckboxListTile(
-                        title: Text(operation['operationName']),
-                        value: selectedOperations.contains(operation),
-                        onChanged: (bool? value) {
-                          _toggleSelection(operation);
-                        },
-                      );
-                    },
+                  child: Card(
+                    color: Colors.brown.shade100,
+                    elevation: 4,
+                    child: ListView.builder(
+                      itemCount: availableOperations.length,
+                      itemBuilder: (context, index) {
+                        Map<String, dynamic> operation =
+                            availableOperations[index];
+                        return CheckboxListTile(
+                          title: Text(operation['operationName']),
+                          value: selectedOperations.contains(operation),
+                          onChanged: (bool? value) {
+                            _toggleSelection(operation);
+                          },
+                          activeColor: Colors.brown.shade400,
+                        );
+                      },
+                    ),
                   ),
                 ),
                 if (!_isOperationSelectedValid)
@@ -166,6 +171,7 @@ class _OperationSetPageState extends State<OperationSetPage> {
                       ),
                     ),
                   ),
+                SizedBox(height: 10),
                 Center(
                   child: ElevatedButton(
                     onPressed: _saveOperationSet,
