@@ -1,13 +1,14 @@
 Given('the user has permission to register new operations') do
     @create = OperationRecods_Requests.new
+    @assert = Assertions.new
   end
   
   When('the user submits a valid registration form for a new operation') do
-    @create_operation = @create.create_operation(DATABASE[:operation][:cutType], DATABASE[:operation][:operationName], DATABASE[:operation][:calculatedTime])
+    @create_operation = @create.create_operation(DATABASE[:operation][:operationName], DATABASE[:operation][:calculatedTime])
   end
   
   Then('the system should successfully register the new operation') do
-    @assert = expect(@create_operation.code).to eql(201)
+    @assert.create_success(@create_operation.code, @create_operation.message)
   end
   
   Given('the user has permission to access the operation directory') do
@@ -29,7 +30,7 @@ Given('the user has permission to register new operations') do
   end
   
   When('the user requests the details of an operation by their ID') do
-    @get_operation_by_id = @get_by_id.get_operation_by_id(1)
+    @get_operation_by_id = @get_by_id.get_operation_by_id((DATABASE[:operation][:id]))
   end
   
   Then('the system should return the operations information for the given ID') do

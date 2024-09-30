@@ -1,5 +1,6 @@
 Given('the user has permission to register new role') do
     @create = Role_Requests.new
+    @assert = Assertions.new
   end
   
   When('the user submits a valid registration form for a new role') do
@@ -7,7 +8,7 @@ Given('the user has permission to register new role') do
   end
   
   Then('the system should successfully register the new role') do
-    @assert = expect(@create_role.code).to eql(201)
+    @assert.create_success(@create_role.code, @create_role.message)
   end
   
   Given('the user has permission to access the role directory') do
@@ -29,7 +30,7 @@ Given('the user has permission to register new role') do
   end
   
   When('the user requests the details of an role by their ID') do
-    @get_role_by_id = @get_by_id.get_role_by_id(1)
+    @get_role_by_id = @get_by_id.get_role_by_id(DATABASE[:role][:id])
   end
   
   Then('the system should return the roles information for the given ID') do

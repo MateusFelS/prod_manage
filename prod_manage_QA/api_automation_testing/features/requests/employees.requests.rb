@@ -8,18 +8,18 @@ class Employees_Requests
         API.get('/employees/' + id.to_s)
     end
 
-    def create_employee(name, role, entryDate)
+    def create_employee(name, roleId, entryDate)
         API.post('/employees/', body: {
             "name": name,
-            "role": role,
+            "roleId": roleId,
             "entryDate": entryDate
         }.to_json)
     end
 
-    def update_employee(id, name, role, entryDate)
+    def update_employee(id, name, roleId, entryDate)
         API.put('/employees/' + id.to_s, body: {
             "name": name,
-            "role": role,
+            "roleId": roleId,
             "entryDate": entryDate
         }.to_json)
     end

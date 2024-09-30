@@ -71,7 +71,7 @@ class _OperationSetPageState extends State<OperationSetPage> {
     try {
       List<Map<String, dynamic>> selectedOperationsData = selectedOperations
           .map((operation) => {
-                'id': operation['id'], // Inclui o id
+                'id': operation['id'],
                 'operationName': operation['operationName'],
                 'calculatedTime': operation['calculatedTime'],
               })
@@ -81,10 +81,15 @@ class _OperationSetPageState extends State<OperationSetPage> {
         'setName': setName,
         'operationRecords': selectedOperationsData,
       });
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Conjunto de operações salvo com sucesso!')),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao salvar conjunto de operações: $e')),
       );
@@ -95,103 +100,107 @@ class _OperationSetPageState extends State<OperationSetPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Criar Conjunto de Operações'),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTitle('Crie um Conjunto de Operações'),
-                SizedBox(height: 20),
-                Text(
-                  'Nome do Conjunto:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.brown.shade600,
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  onChanged: (value) {
-                    setName = value;
-                  },
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Insira o nome do conjunto',
-                    errorText: _isSetNameValid
-                        ? null
-                        : 'O nome do conjunto é obrigatório.',
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Selecione as operações:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.brown.shade600,
-                  ),
-                ),
-                Expanded(
-                  child: Card(
-                    color: Colors.brown.shade100,
-                    elevation: 4,
-                    child: ListView.builder(
-                      itemCount: availableOperations.length,
-                      itemBuilder: (context, index) {
-                        Map<String, dynamic> operation =
-                            availableOperations[index];
-                        return CheckboxListTile(
-                          title: Text(operation['operationName']),
-                          value: selectedOperations.contains(operation),
-                          onChanged: (bool? value) {
-                            _toggleSelection(operation);
-                          },
-                          activeColor: Colors.brown.shade400,
-                        );
-                      },
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTitle('Crie um Conjunto de Operações'),
+                  SizedBox(height: 20),
+                  Text(
+                    'Nome do Conjunto:',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade600,
                     ),
                   ),
-                ),
-                if (!_isOperationSelectedValid)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'É necessário selecionar ao menos uma operação.',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
+                  SizedBox(height: 10),
+                  TextField(
+                    onChanged: (value) {
+                      setName = value;
+                    },
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Insira o nome do conjunto',
+                      errorText: _isSetNameValid
+                          ? null
+                          : 'O nome do conjunto é obrigatório.',
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Selecione as operações:',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade600,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    height: 180,
+                    child: Card(
+                      color: Colors.brown.shade100,
+                      elevation: 4,
+                      child: ListView.builder(
+                        itemCount: availableOperations.length,
+                        itemBuilder: (context, index) {
+                          Map<String, dynamic> operation =
+                              availableOperations[index];
+                          return CheckboxListTile(
+                            title: Text(operation['operationName']),
+                            value: selectedOperations.contains(operation),
+                            onChanged: (bool? value) {
+                              _toggleSelection(operation);
+                            },
+                            activeColor: Colors.brown.shade400,
+                          );
+                        },
                       ),
                     ),
                   ),
-                SizedBox(height: 10),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _saveOperationSet,
-                    child: Text('Salvar Conjunto'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown.shade400,
-                      foregroundColor: Colors.white,
-                      textStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  if (!_isOperationSelectedValid)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'É necessário selecionar ao menos uma operação.',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
                       ),
-                      fixedSize:
-                          Size(MediaQuery.of(context).size.width * .8, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                    ),
+                  SizedBox(height: 10),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: _saveOperationSet,
+                      child: Text('Salvar Conjunto'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown.shade400,
+                        foregroundColor: Colors.white,
+                        textStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        fixedSize:
+                            Size(MediaQuery.of(context).size.width * .8, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

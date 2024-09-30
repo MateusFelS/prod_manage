@@ -42,7 +42,7 @@ class _OperationPageState extends State<OperationPage> {
         try {
           await _apiService.saveOperationRecord(data);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registro salvo com sucesso!')),
+            SnackBar(content: Text('Registro de Operação salvo com sucesso!')),
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(

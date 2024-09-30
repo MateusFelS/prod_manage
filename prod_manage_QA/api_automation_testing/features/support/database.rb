@@ -5,45 +5,67 @@ def generate_random_token(length = 6)
   SecureRandom.hex(length / 2)
 end
 
+# Variáveis
+id = 1
+roleId = 1
+pieceAmount = 10
+selectedOperations = 1
+employeeId = 1
+calculatedTime = '00:00:15'
+
 current_date = Date.today.iso8601 
 
 DATABASE = {
   user: {
+    id: id,
     token: generate_random_token,
-    password: '12332100',
-    name: 'Matt'
+    password: '',
+    name: ''
   },
 
   employee: {
-    name: 'Mateus',
-    roleId: 1,
+    id: id,
+    name: '',
+    roleId: roleId,
     entryDate: current_date
   },
 
   role: {
-    title: 'Gerente',
-    description: 'xxxx'
+    id: id,
+    title: '', # Cada role tem um 'title' único no Banco de Dados
+    description: ''
   },
 
   cut: {
-    code: 'ABB',
-    pieceAmount: 10,
-    line1: 'B',
-    line2: 'B',
+    id: id,
+    code: '',
+    pieceAmount: pieceAmount,
+    line1: '',
+    line2: '',
     limiteDate: current_date,
-    comment: 'teste',
-    supplier: 'teste_2',
-    employeeId: 1
+    comment: '',
+    supplier: '',
+    selectedOperations: selectedOperations
   },
 
   operation: {
-    cutType: 'Shorts',
-    operationName: 'Shorts',
-    calculatedTime: '00:00:15'
+    id: id,
+    operationName: '', # Cada operation tem um 'operationName' único no Banco de Dados
+    calculatedTime: calculatedTime
+  },
+  
+  operation_set: {
+    id: id,
+    setName: '', # Cada operations_set tem um 'setName' único no Banco de Dados
+    operationRecords: {
+      "operationName": '',
+      "calculatedTime": calculatedTime,
+    }
   },
 
   performance: {
-    employeeId: 1,
+    id: id,
+    employeeId: employeeId,
     date: current_date,
     schedules: {
       "piecesMade": 6300,

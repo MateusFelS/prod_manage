@@ -1,6 +1,7 @@
 
 Given('that the user has permission to create new accounts') do
     @create = Users_Requests.new
+    @assert = Assertions.new
   end
   
   When('the user submits a valid user registration form') do
@@ -8,7 +9,7 @@ Given('that the user has permission to create new accounts') do
   end
   
   Then('the system should create a new user account') do
-    @assert = expect(@create_user.code).to eql(201)
+    @assert.create_success(@create_user.code, @create_user.message)
   end
   
   Given('that the user has permission to edit user profiles') do
@@ -17,26 +18,13 @@ Given('that the user has permission to create new accounts') do
   end
   
   When('the user submits a valid update request for an existing user') do
-    @update_user = @update.update_user(1, DATABASE[:user][:password], DATABASE[:user][:name])
+    @update_user = @update.update_user(DATABASE[:user][:id], DATABASE[:user][:password], DATABASE[:user][:name])
   end
   
   Then('the system should update the users information in the database') do
     @assert.request_success(@update_user.code, @update_user.message)
   end
   
-  Given('that the user has permission to remove accounts') do
-    @delete = Users_Requests.new
-    @assert = Assertions.new
-  end
-  
-  When('the user initiates the deletion of a user account') do
-    @delete_user = @delete.delete_user(18)
-  end
-  
-  Then('the system should permanently remove the users data from the database') do
-    @assert.request_success(@delete_user.code, @delete_user.message)
-  end
-
   Given('that the user has permission to access the user list') do
     @get = Users_Requests.new
     @assert = Assertions.new
@@ -56,9 +44,22 @@ Given('that the user has permission to create new accounts') do
   end
   
   When('the user requests a list of users ordered by their IDs') do
-    @get_user_by_id = @get_by_id.get_user_by_id(1)
+    @get_user_by_id = @get_by_id.get_user_by_id(DATABASE[:user][:id])
   end
   
   Then('the system should return a paginated list of users sorted by ID') do
     @assert.request_success(@get_user_by_id.code, @get_user_by_id.message)
+  end
+
+  Given('that the user has permission to remove accounts') do
+    @delete = Users_Requests.new
+    @assert = Assertions.new
+  end
+  
+  When('the user initiates the deletion of a user account') do
+    @delete_user = @delete.delete_user(DATABASE[:user][:id])
+  end
+  
+  Then('the system should permanently remove the users data from the database') do
+    @assert.request_success(@delete_user.code, @delete_user.message)
   end

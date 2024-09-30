@@ -406,7 +406,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Icon(Icons.warning, size: 50, color: Colors.red),
             SizedBox(height: 10),
             Text(
-              'Nenhum rendimento cadastrado neste periodo.',
+              'Nenhum rendimento cadastrado neste periodo!',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,

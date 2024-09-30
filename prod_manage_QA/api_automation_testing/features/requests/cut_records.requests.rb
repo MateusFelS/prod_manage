@@ -8,7 +8,7 @@ class CutRecods_Requests
         API.get('/cut-records/' + id.to_s)
     end
 
-    def create_cut(code, pieceAmount, line1, line2, limiteDate, comment, supplier, employeeId)
+    def create_cut(code, pieceAmount, line1, line2, limiteDate, comment, supplier, selectedOperations)
         API.post('/cut-records/', body: {
             "code": code,
             "pieceAmount": pieceAmount,
@@ -17,11 +17,11 @@ class CutRecods_Requests
             "limiteDate": limiteDate,
             "comment": comment,
             "supplier": supplier,
-            "employeeId": employeeId
+            "selectedOperations": selectedOperations
         }.to_json)
     end
 
-    def update_cut(id, code, pieceAmount, line1, line2, limiteDate, comment, supplier, employeeId)
+    def update_cut(id, code, pieceAmount, line1, line2, limiteDate, comment, supplier, selectedOperations)
         API.put('/cut-records/' + id.to_s, body: {
             "code": code,
             "pieceAmount": pieceAmount,
@@ -30,7 +30,7 @@ class CutRecods_Requests
             "limiteDate": limiteDate,
             "comment": comment,
             "supplier": supplier,
-            "employeeId": employeeId
+            "selectedOperations": selectedOperations
         }.to_json)
     end
 

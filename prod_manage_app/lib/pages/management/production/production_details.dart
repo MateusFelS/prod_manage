@@ -71,6 +71,14 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     return hours * 60 + minutes + (seconds / 60);
   }
 
+  String _convertMinutesToTimeString(double totalMinutes) {
+    final int hours = totalMinutes ~/ 60;
+    final int minutes = (totalMinutes % 60).toInt();
+    final int seconds = ((totalMinutes - totalMinutes.toInt()) * 60).toInt();
+
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _updateStatus() async {
     try {
       await _apiService.updateStatus(widget.cut['id'], _currentStatus);
@@ -272,6 +280,9 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                 (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
             final totalTime = timeInMinutes * quantity;
 
+            final String formattedTotalTime =
+                _convertMinutesToTimeString(totalTime);
+
             return ListTile(
               title: Text(
                 '${record['operationName']}',
@@ -279,7 +290,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                     color: Colors.brown.shade800, fontWeight: FontWeight.bold),
               ),
               trailing: Text(
-                '${totalTime.toStringAsFixed(2)} min',
+                'tempo - $formattedTotalTime',
                 style: TextStyle(
                     color: Colors.brown.shade800, fontWeight: FontWeight.bold),
               ),

@@ -1,5 +1,6 @@
 Given('the user has permission to register new performance') do
     @create = Performance_Requests.new
+    @assert = Assertions.new
   end
   
   When('the user submits a valid registration form for a new performance') do
@@ -8,7 +9,7 @@ Given('the user has permission to register new performance') do
   end
   
   Then('the system should successfully register the new performance') do
-    @assert = expect(@create_performance.code).to eql(201)
+    @assert.create_success(@create_performance.code, @create_performance.message)
   end
 
   Given('the user has permission to access the performance directory') do
