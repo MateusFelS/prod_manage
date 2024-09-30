@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
 import 'package:prod_manage/services/api_service.dart';
+import 'package:prod_manage/widgets/report_widgets/bar_chart.dart';
+import 'package:prod_manage/widgets/report_widgets/line_chart.dart';
+import 'package:prod_manage/widgets/report_widgets/pie_chart.dart';
 
 class ReportsPage extends StatefulWidget {
   @override
@@ -102,75 +105,10 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
-  List<String> _generateDateRange() {
-    DateTime now = DateTime.now();
-    return List.generate(7, (index) {
-      DateTime date = now.subtract(Duration(days: index));
-      return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-    }).reversed.toList();
-  }
-
   double _getMaxYValueForRolePerformance() {
     return _rolePerformance.isEmpty
         ? 10000
         : _rolePerformance.values.reduce((a, b) => a > b ? a : b);
-  }
-
-  Widget _buildBarChart(String title) {
-    if (_rolePerformance.isEmpty) {
-      return _buildEmptyChartContainer(title);
-    }
-
-    return _buildChartContainer(
-      title,
-      SizedBox(
-        height: 270,
-        child: BarChart(
-          BarChartData(
-            gridData: FlGridData(show: true),
-            titlesData: FlTitlesData(
-              leftTitles: _buildSideTitles(),
-              rightTitles:
-                  AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: _buildBottomTitlesForRole(),
-            ),
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: Colors.grey, width: 1),
-            ),
-            barGroups: _buildBarChartGroups(),
-            minY: 0,
-            maxY: _getMaxYValueForRolePerformance(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<BarChartGroupData> _buildBarChartGroups() {
-    List<BarChartGroupData> barGroups = [];
-    List<String> dateRange = _generateDateRange();
-
-    for (int i = 0; i < dateRange.length; i++) {
-      String date = dateRange[i];
-      double value = _rolePerformance[date] ?? 0.0;
-      barGroups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: value,
-              color: const Color.fromARGB(255, 76, 175, 142),
-              width: 20,
-              borderRadius: BorderRadius.circular(0),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return barGroups;
   }
 
   void _processPerformanceData(List performances) {
@@ -259,120 +197,10 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
-  List<FlSpot> _buildLineChartSpots() {
-    List<FlSpot> spots = [];
-    List<String> dateRange = _generateDateRange();
-
-    for (int i = 0; i < dateRange.length; i++) {
-      String date = dateRange[i];
-      double value = _employeePerformance[date] ?? 0.0;
-      spots.add(FlSpot(i.toDouble(), value));
-    }
-
-    return spots;
-  }
-
   double _getMaxYValue() {
     return _employeePerformance.isEmpty
         ? 10000
         : _employeePerformance.values.reduce((a, b) => a > b ? a : b);
-  }
-
-  Widget _buildLineChart(String title) {
-    if (_employeePerformance.isEmpty) {
-      return _buildEmptyChartContainer(title);
-    }
-
-    return _buildChartContainer(
-      title,
-      SizedBox(
-        height: 270,
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(show: true),
-            titlesData: _buildTitlesData(),
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: Colors.grey, width: 1),
-            ),
-            lineBarsData: [
-              LineChartBarData(
-                spots: _buildLineChartSpots(),
-                isCurved: true,
-                dotData: FlDotData(show: true),
-                belowBarData: BarAreaData(
-                    show: true, color: Colors.blue.withOpacity(0.3)),
-              ),
-            ],
-            minY: 0,
-            maxY: _getMaxYValue(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  AxisTitles _buildBottomTitlesForRole() {
-    return AxisTitles(
-      sideTitles: SideTitles(
-        showTitles: true,
-        reservedSize: 40,
-        interval: 1,
-        getTitlesWidget: (value, meta) {
-          int index = value.toInt();
-          List<String> dateRange = _generateDateRange();
-
-          if (index >= 0 && index < dateRange.length) {
-            var date = DateTime.parse(dateRange[index]);
-            return Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                '${date.day}/${date.month}',
-                style: TextStyle(fontSize: 10),
-              ),
-            );
-          } else {
-            return Text('');
-          }
-        },
-      ),
-    );
-  }
-
-  AxisTitles _buildBottomTitles() {
-    return AxisTitles(
-      sideTitles: SideTitles(
-        showTitles: true,
-        reservedSize: 40,
-        interval: 1,
-        getTitlesWidget: (value, meta) {
-          int index = value.toInt();
-          List<String> dateRange = _generateDateRange();
-
-          if (index >= 0 && index < dateRange.length) {
-            var date = DateTime.parse(dateRange[index]);
-            return Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                '${date.day}/${date.month}',
-                style: TextStyle(fontSize: 10),
-              ),
-            );
-          } else {
-            return Text('');
-          }
-        },
-      ),
-    );
-  }
-
-  FlTitlesData _buildTitlesData() {
-    return FlTitlesData(
-      leftTitles: _buildSideTitles(),
-      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      bottomTitles: _buildBottomTitles(),
-    );
   }
 
   AxisTitles _buildSideTitles() {
@@ -394,131 +222,6 @@ class _ReportsPageState extends State<ReportsPage> {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildEmptyChartContainer(String title) {
-    return _buildChartContainer(
-      title,
-      Center(
-        child: Column(
-          children: [
-            Icon(Icons.warning, size: 50, color: Colors.red),
-            SizedBox(height: 10),
-            Text(
-              'Nenhum rendimento cadastrado neste periodo!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.brown.shade900,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChartContainer(String title, Widget child) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.brown.shade50,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPieChart(String title) {
-    if (_employeePerformance.isEmpty) {
-      return _buildEmptyChartContainer(title);
-    }
-    return _buildChartContainer(
-      'Desempenho de Funcionários',
-      Column(
-        children: [
-          SizedBox(
-            height: 250,
-            child: PieChart(
-              PieChartData(
-                sections: [
-                  PieChartSectionData(
-                    color: Colors.green,
-                    value: _percentAcimaDaMedia,
-                    title: '${_percentAcimaDaMedia.toStringAsFixed(1)}%',
-                    radius: 100,
-                    titleStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    color: Colors.red,
-                    value: _percentAbaixoDaMedia,
-                    title: '${_percentAbaixoDaMedia.toStringAsFixed(1)}%',
-                    radius: 100,
-                    titleStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-                sectionsSpace: 2,
-                centerSpaceRadius: 0,
-              ),
-            ),
-          ),
-          SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(Colors.green, 'Acima da Média'),
-              SizedBox(width: 16),
-              _buildLegendItem(Colors.red, 'Abaixo da Média'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(Color color, String text) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          color: color,
-        ),
-        SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(fontSize: 14),
-        ),
-      ],
     );
   }
 
@@ -562,7 +265,10 @@ class _ReportsPageState extends State<ReportsPage> {
               ],
             ),
             SizedBox(height: 16),
-            _buildPieChart('Desempenho de Funcionários'),
+            PieChartWidget(
+              percentAcimaDaMedia: _percentAcimaDaMedia,
+              percentAbaixoDaMedia: _percentAbaixoDaMedia,
+            ),
             SizedBox(height: 16),
             Row(
               children: [
@@ -589,7 +295,10 @@ class _ReportsPageState extends State<ReportsPage> {
               ],
             ),
             SizedBox(height: 16),
-            _buildLineChart('Produção Diária do Funcionário'),
+            LineChartWidget(
+              employeePerformance: _employeePerformance,
+              maxY: _getMaxYValue(),
+            ),
             Row(
               children: [
                 Text(
@@ -614,7 +323,10 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
               ],
             ),
-            _buildBarChart('Roupas Completas por Dia'),
+            BarChartWidget(
+              rolePerformance: _rolePerformance,
+              maxY: _getMaxYValueForRolePerformance(),
+            ),
           ],
         ),
       ),

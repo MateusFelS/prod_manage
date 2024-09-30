@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:prod_manage/pages/management/employee/timing_options_sheet.dart';
+import 'package:prod_manage/widgets/performance_widgets/timing_options_sheet.dart';
 import 'dart:async';
 import 'package:prod_manage/widgets/app_bar.dart';
-import 'package:prod_manage/widgets/performance_table.dart';
-import 'package:prod_manage/widgets/timer_controls.dart';
+import 'package:prod_manage/widgets/performance_widgets/performance_table.dart';
+import 'package:prod_manage/widgets/performance_widgets/timer_controls.dart';
 import 'package:prod_manage/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
