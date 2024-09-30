@@ -18,6 +18,9 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    List<dynamic> filteredCutRecords = widget.cutRecords
+        .where((record) => record['status'] == 'Em progresso')
+        .toList();
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -44,7 +47,7 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
                   setState(() {
                     selectedCut = value;
 
-                    var selectedRecord = widget.cutRecords.firstWhere(
+                    var selectedRecord = filteredCutRecords.firstWhere(
                       (record) => record['code'] == selectedCut,
                       orElse: () => null,
                     );
@@ -56,7 +59,7 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
                     }
                   });
                 },
-                items: widget.cutRecords.map((record) {
+                items: filteredCutRecords.map((record) {
                   return DropdownMenuItem<String>(
                     value: record['code'],
                     child: Text(record['code']),
@@ -64,6 +67,14 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
                 }).toList(),
                 decoration: _inputDecoration('Selecione o Código de Corte'),
               ),
+              if (filteredCutRecords.isEmpty)
+                Text(
+                  'Não há cortes em progresso no momento.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color.fromARGB(255, 176, 16, 4),
+                  ),
+                ),
               SizedBox(height: 10),
               TextFormField(
                 keyboardType: TextInputType.number,
@@ -85,6 +96,7 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
                     }
                   });
                 },
+                enabled: selectedCut != null,
               ),
               SizedBox(height: 10),
               ElevatedButton(
