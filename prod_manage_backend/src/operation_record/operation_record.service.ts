@@ -23,4 +23,10 @@ export class OperationRecordService{
           }
       });
   }
+
+  async deleteOperationRecord(id: number): Promise<OperationRecord> {
+    return this.prisma.operationRecord.delete({
+      where: { id },
+    });
+  }
 }

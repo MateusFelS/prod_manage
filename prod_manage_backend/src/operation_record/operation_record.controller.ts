@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param, Delete } from "@nestjs/common";
 import { OperationRecordService } from "./operation_record.service";
 import { OperationRecord } from "@prisma/client";
 
@@ -17,7 +17,12 @@ export class OperationRecordController{
     }
 
     @Get(':id')
-    async getUsersById(@Param('id') id: string){
+    async getOperationById(@Param('id') id: string){
         return this.operationService.getOperationRecordsById(Number(id));
+    }
+
+    @Delete(':id')
+    async deleteOperation(@Param('id') id: string) {
+      return this.operationService.deleteOperationRecord(Number(id));
     }
 }
