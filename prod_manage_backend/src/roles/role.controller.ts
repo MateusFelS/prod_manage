@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param, Delete } from "@nestjs/common";
 import { RoleService } from "./role.service";
 import { Role } from "@prisma/client";
 
@@ -19,5 +19,10 @@ export class RoleController{
     @Get(':id')
     async getUsersById(@Param('id') id: string){
         return this.roleService.getRoleById(Number(id));
+    }
+
+    @Delete(':id')
+    async deleteRole(@Param('id') id: string){
+        return this.roleService.deleteRole(Number(id));
     }
 }

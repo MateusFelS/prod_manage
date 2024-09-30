@@ -14,7 +14,7 @@ Feature: Employees Management
     When the user submits valid updates for an existing employee
     Then the system should successfully update the employees profile
 
-  Scenario: Deleting an employee account
+  Scenario: Deleting an employee
     Given the user has permission to delete employee accounts
     When the user initiates the deletion of an employee record
     Then the system should permanently remove the employee from the database

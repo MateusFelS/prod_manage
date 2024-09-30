@@ -14,7 +14,7 @@ Feature: Cut Records Management
     When the user submits valid updates for an existing cut
     Then the system should successfully update the cut records
 
-  Scenario: Deleting an cut account
+  Scenario: Deleting an cut record
     Given the user has permission to delete cut records
     When the user initiates the deletion of an cut record
     Then the system should permanently remove the cut from the database

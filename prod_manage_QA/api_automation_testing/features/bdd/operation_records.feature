@@ -18,3 +18,8 @@ Feature: Operation Management
     Given the user has permission to view operation details
     When the user requests the details of an operation by their ID
     Then the system should return the operations information for the given ID
+  
+  Scenario: Deleting an Operation
+    Given the user has permission to delete operation records
+    When the user initiates the deletion of an operation record
+    Then the system should permanently remove the operation from the database

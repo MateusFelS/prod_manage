@@ -14,5 +14,9 @@ class OperationRecods_Requests
             "calculatedTime": calculatedTime,
         }.to_json)
     end
+
+    def delete_operation(id)
+        API.delete('/operations/' + id.to_s)
+    end
     
 end

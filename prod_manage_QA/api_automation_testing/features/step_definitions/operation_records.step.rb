@@ -36,3 +36,16 @@ Given('the user has permission to register new operations') do
   Then('the system should return the operations information for the given ID') do
     @assert.request_success(@get_operation_by_id.code, @get_operation_by_id.message)
   end
+
+  Given('the user has permission to delete operation records') do
+    @delete = OperationRecods_Requests.new
+    @assert = Assertions.new
+  end
+  
+  When('the user initiates the deletion of an operation record') do
+    @delete_operation = @delete.delete_operation(DATABASE[:operation][:id])
+  end
+  
+  Then('the system should permanently remove the operation from the database') do
+    @assert.request_success(@delete_operation.code, @delete_operation.message)
+  end
