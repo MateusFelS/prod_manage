@@ -70,16 +70,14 @@ class ApiService {
   }
 
   Future<http.Response> registerUser(Map<String, dynamic> data) async {
-    final url = Uri.parse(
-        '$_baseUrl/users'); // Supondo que o endpoint para registro seja /users
+    final url = Uri.parse('$_baseUrl/users');
     final headers = {'Content-Type': 'application/json'};
 
-    final body = jsonEncode(data); // Converte o Map para JSON
+    final body = jsonEncode(data);
 
     try {
       final response = await http.post(url, headers: headers, body: body);
 
-      // Retorna a resposta para ser tratada na página
       return response;
     } catch (e) {
       throw Exception('Erro ao conectar à API: $e');

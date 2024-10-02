@@ -2,10 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class BarChartWidget extends StatelessWidget {
-  final Map<String, double> rolePerformance;
+  final Map<String, double> operationPerformance;
   final double maxY;
 
-  BarChartWidget({required this.rolePerformance, required this.maxY});
+  BarChartWidget({required this.operationPerformance, required this.maxY});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class BarChartWidget extends StatelessWidget {
                         AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     topTitles:
                         AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: _buildBottomTitlesForRole(),
+                    bottomTitles: _buildBottomTitlesForOperation(),
                   ),
                   borderData: FlBorderData(
                     show: true,
@@ -53,7 +53,7 @@ class BarChartWidget extends StatelessWidget {
     );
   }
 
-  AxisTitles _buildBottomTitlesForRole() {
+  AxisTitles _buildBottomTitlesForOperation() {
     return AxisTitles(
       sideTitles: SideTitles(
         showTitles: true,
@@ -92,7 +92,13 @@ class BarChartWidget extends StatelessWidget {
           } else {
             text = value.toInt().toString();
           }
-          return Text(text, style: TextStyle(fontSize: 12));
+
+          double fontSize = value >= 100000 ? 10 : 12;
+
+          return Text(
+            text,
+            style: TextStyle(fontSize: fontSize),
+          );
         },
       ),
     );
@@ -112,7 +118,7 @@ class BarChartWidget extends StatelessWidget {
 
     for (int i = 0; i < dateRange.length; i++) {
       String date = dateRange[i];
-      double value = rolePerformance[date] ?? 0.0;
+      double value = operationPerformance[date] ?? 0.0;
       barGroups.add(
         BarChartGroupData(
           x: i,

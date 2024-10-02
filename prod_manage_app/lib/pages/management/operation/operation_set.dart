@@ -27,6 +27,7 @@ class _OperationSetPageState extends State<OperationSetPage> {
       List<Map<String, dynamic>> operationsData =
           await _apiService.fetchOperationRecords();
 
+      if (!mounted) return;
       setState(() {
         availableOperations = operationsData.map((operation) {
           return {
@@ -37,9 +38,11 @@ class _OperationSetPageState extends State<OperationSetPage> {
         }).toList();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao carregar operações: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar operações: $e')),
+        );
+      }
     }
   }
 
@@ -60,11 +63,13 @@ class _OperationSetPageState extends State<OperationSetPage> {
     });
 
     if (!_isSetNameValid || !_isOperationSelectedValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Por favor, preencha todos os campos obrigatórios.'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Por favor, preencha todos os campos obrigatórios.'),
+          ),
+        );
+      }
       return;
     }
 
@@ -82,17 +87,18 @@ class _OperationSetPageState extends State<OperationSetPage> {
         'operationRecords': selectedOperationsData,
       });
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Conjunto de operações salvo com sucesso!')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Conjunto de operações salvo com sucesso!')),
+        );
+        Navigator.of(context).pop();
+      }
     } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar conjunto de operações: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar conjunto de operações: $e')),
+        );
+      }
     }
   }
 

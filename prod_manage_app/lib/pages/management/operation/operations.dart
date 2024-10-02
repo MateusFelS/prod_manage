@@ -41,21 +41,32 @@ class _OperationPageState extends State<OperationPage> {
 
         try {
           await _apiService.saveOperationRecord(data);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registro de Operação salvo com sucesso!')),
-          );
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Registro de Operação salvo com sucesso!')),
+            );
+
+            Navigator.of(context).pop();
+          }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao salvar registro: $e')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erro ao salvar registro: $e')),
+            );
+          }
         }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
             content: Text(
-                'Você deve iniciar e parar o cronômetro pelo menos uma vez antes de salvar o registro')),
-      );
+                'Você deve iniciar e parar o cronômetro pelo menos uma vez antes de salvar o registro'),
+          ),
+        );
+      }
     }
   }
 

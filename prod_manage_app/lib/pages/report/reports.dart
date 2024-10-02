@@ -20,31 +20,32 @@ class _ReportsPageState extends State<ReportsPage> {
   List<dynamic> _employees = [];
   int? _selectedEmployeeId;
   Map<String, double> _employeePerformance = {};
-  List<dynamic> _roles = [];
-  int? _selectedRole;
-  Map<String, double> _rolePerformance = {};
+  Map<String, double> _operationPerformance = {};
+  List<String> _operationSets = [];
+  String? _selectedOperationSet;
 
   @override
   void initState() {
     super.initState();
     _fetchEmployees();
     _fetchPerformanceData();
-    _fetchRoles();
+    _fetchOperationSets();
   }
 
-  Future<void> _fetchRoles() async {
+  Future<void> _fetchOperationSets() async {
     try {
-      List roles = await _apiService.fetchRoles();
+      List operationSets = await _apiService.fetchOperationSets();
       if (!mounted) return;
       setState(() {
-        _roles = roles;
-        if (_roles.isNotEmpty) {
-          _selectedRole = _roles[0]['id'];
+        _operationSets =
+            operationSets.map((set) => set['setName'].toString()).toList();
+        if (_operationSets.isNotEmpty) {
+          _selectedOperationSet = _operationSets[0];
         }
       });
     } catch (error) {
       if (!mounted) return;
-      _showSnackBar('Erro ao carregar a lista de funções: $error');
+      _showSnackBar('Erro ao carregar os conjuntos de operações: $error');
     }
   }
 
@@ -69,49 +70,48 @@ class _ReportsPageState extends State<ReportsPage> {
     try {
       List performances = await _apiService.fetchPerformanceData();
       if (!mounted) return;
-      _processPerformanceData(performances);
-      _processRolePerformanceData(performances);
+      _processEmployeePerformanceData(performances);
+      _processOperationPerformanceData(performances);
     } catch (error) {
       if (!mounted) return;
       _showSnackBar('Erro ao carregar os dados de desempenho: $error');
     }
   }
 
-  List<dynamic> _getEmployeesForSelectedRole() {
-    return _employees.where((employee) {
-      return employee['roleId'] == _selectedRole;
+  void _processOperationPerformanceData(List performances) {
+    if (_selectedOperationSet == null) return;
+
+    Map<String, double> productionByDate = {};
+
+    List filteredPerformances = performances.where((performance) {
+      return performance['schedules']['operationSet'].any((operation) {
+        return operation['setName'] == _selectedOperationSet;
+      });
     }).toList();
-  }
 
-  void _processRolePerformanceData(List performances) {
-    Map<String, double> dailyProductionForRole = {};
+    for (var performance in filteredPerformances) {
+      int produced = performance['schedules']['piecesMade'];
+      String date = performance['date'].split('T')[0];
 
-    List filteredEmployees = _getEmployeesForSelectedRole();
-
-    for (var performance in performances) {
-      if (filteredEmployees.any((e) => e['id'] == performance['employeeId'])) {
-        String date = performance['date'].split('T')[0];
-        int produced = performance['produced'];
-
-        print('Data processada: $date, Produzido: $produced');
-
-        dailyProductionForRole.update(date, (value) => value + produced,
-            ifAbsent: () => produced.toDouble());
+      if (!productionByDate.containsKey(date)) {
+        productionByDate[date] = 0.0;
       }
+
+      productionByDate[date] = productionByDate[date]! + produced;
     }
 
     setState(() {
-      _rolePerformance = dailyProductionForRole;
+      _operationPerformance = productionByDate;
     });
   }
 
-  double _getMaxYValueForRolePerformance() {
-    return _rolePerformance.isEmpty
+  double _getMaxYValueForOperationPerformance() {
+    return _operationPerformance.isEmpty
         ? 10000
-        : _rolePerformance.values.reduce((a, b) => a > b ? a : b);
+        : _operationPerformance.values.reduce((a, b) => a > b ? a : b) + 5000;
   }
 
-  void _processPerformanceData(List performances) {
+  void _processEmployeePerformanceData(List performances) {
     Map<int, Map<String, List<dynamic>>> employeeGroupedPerformances = {};
 
     for (var performance in performances) {
@@ -197,10 +197,10 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
-  double _getMaxYValue() {
+  double _getMaxYValueForEmployeePerformance() {
     return _employeePerformance.isEmpty
         ? 10000
-        : _employeePerformance.values.reduce((a, b) => a > b ? a : b);
+        : _employeePerformance.values.reduce((a, b) => a > b ? a : b) + 5000;
   }
 
   AxisTitles _buildSideTitles() {
@@ -297,35 +297,38 @@ class _ReportsPageState extends State<ReportsPage> {
             SizedBox(height: 16),
             LineChartWidget(
               employeePerformance: _employeePerformance,
-              maxY: _getMaxYValue(),
+              maxY: _getMaxYValueForEmployeePerformance(),
             ),
+            SizedBox(height: 16),
             Row(
               children: [
                 Text(
-                  'Selecione uma Função:',
+                  'Selecione uma operação:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 SizedBox(width: 16),
-                DropdownButton<int>(
-                  value: _selectedRole,
-                  items: _roles.map<DropdownMenuItem<int>>((role) {
-                    return DropdownMenuItem<int>(
-                      value: role['id'],
-                      child: Text(role['title']),
+                DropdownButton<String>(
+                  value: _selectedOperationSet,
+                  items:
+                      _operationSets.map<DropdownMenuItem<String>>((setName) {
+                    return DropdownMenuItem<String>(
+                      value: setName,
+                      child: Text(setName),
                     );
                   }).toList(),
-                  onChanged: (newRoleId) {
+                  onChanged: (newOperationSetId) {
                     setState(() {
-                      _selectedRole = newRoleId;
+                      _selectedOperationSet = newOperationSetId;
                       _fetchPerformanceData();
                     });
                   },
                 ),
               ],
             ),
+            SizedBox(height: 16),
             BarChartWidget(
-              rolePerformance: _rolePerformance,
-              maxY: _getMaxYValueForRolePerformance(),
+              operationPerformance: _operationPerformance,
+              maxY: _getMaxYValueForOperationPerformance(),
             ),
           ],
         ),

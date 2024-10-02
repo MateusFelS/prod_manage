@@ -18,3 +18,8 @@ Feature: Roles Management
     Given the user has permission to view role details
     When the user requests the details of an role by their ID
     Then the system should return the roles information for the given ID
+
+  Scenario: Deleting an role
+    Given the user has permission to delete operation roles
+    When the user initiates the deletion of an role record
+    Then the system should permanently remove the role from the database

@@ -115,7 +115,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
     return Scaffold(
       appBar: CustomAppBar(title: 'Lista de Funcionários'),
       body: _employees.isEmpty
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: Text('Nenhum Funcionário Cadastrado!'))
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -179,19 +179,6 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
         ),
         onTap: () => _navigateToPerformancePage(employee),
       ),
-    );
-  }
-
-  Widget _buildTrailingIcons(int employeeId) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(Icons.delete, color: Colors.red),
-          onPressed: () => _confirmDeleteEmployee(employeeId),
-        ),
-        Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
-      ],
     );
   }
 

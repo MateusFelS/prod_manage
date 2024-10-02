@@ -2,7 +2,6 @@ datasource db {
   provider = "postgresql"
   url = "postgresql://prod_manage_database_7ybf_user:PKRi8AMITcoTJw5gLPrhmP7VIAHA2zBk@dpg-crs6kfrtq21c73dcl4qg-a.oregon-postgres.render.com/prod_manage_database_7ybf"
 }
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -32,14 +31,14 @@ model CutRecord {
 
 model OperationRecord {
   id             Int      @id @default(autoincrement())
-  operationName  String   
+  operationName  String   @unique
   calculatedTime String  
   createdAt      DateTime @default(now())
 }
 
 model OperationSet {
   id              Int               @id @default(autoincrement())
-  setName         String            // Nome do conjunto de operações
+  setName         String            @unique
   createdAt       DateTime          @default(now())
   operationRecords Json     
 }

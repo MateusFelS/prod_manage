@@ -36,3 +36,16 @@ Given('the user has permission to register new role') do
   Then('the system should return the roles information for the given ID') do
     @assert.request_success(@get_role_by_id.code, @get_role_by_id.message)
   end
+
+  Given('the user has permission to delete operation roles') do
+    @delete = Role_Requests.new
+    @assert = Assertions.new
+  end
+  
+  When('the user initiates the deletion of an role record') do
+    @delete_role = @delete.delete_role(DATABASE[:role][:id])
+  end
+  
+  Then('the system should permanently remove the role from the database') do
+    @assert.request_success(@delete_role.code, @delete_role.message)
+  end

@@ -115,7 +115,13 @@ class LineChartWidget extends StatelessWidget {
           } else {
             text = value.toInt().toString();
           }
-          return Text(text, style: TextStyle(fontSize: 12));
+
+          double fontSize = value >= 100000 ? 10 : 12;
+
+          return Text(
+            text,
+            style: TextStyle(fontSize: fontSize),
+          );
         },
       ),
     );

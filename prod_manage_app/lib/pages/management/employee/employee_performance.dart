@@ -24,7 +24,7 @@ class _PerformancePageState extends State<PerformancePage> {
   bool isTiming = false;
   Stopwatch stopwatch = Stopwatch();
   Timer? timer;
-
+  bool fillAllRows = false;
   final List<String> timeSlots = [
     '7:00 - 8:00',
     '8:00 - 9:00',
@@ -141,12 +141,17 @@ class _PerformancePageState extends State<PerformancePage> {
 
     String overallEfficiency =
         _calculatePerformance(totalProduced, totalTarget70);
+    final selectedCutRecord = _cutRecords.firstWhere(
+      (record) => record['code'] == selectedCut,
+      orElse: () => null,
+    );
 
     return {
       'piecesMade': totalProduced,
       'target100': totalTarget100,
       'target70': totalTarget70,
       'efficiency': overallEfficiency,
+      'operationSet': selectedCutRecord['selectedOperations'],
     };
   }
 
@@ -177,13 +182,23 @@ class _PerformancePageState extends State<PerformancePage> {
     int target70 = (produced * 0.7).round();
 
     setState(() {
-      if (currentRow < performanceData.length) {
-        performanceData[currentRow]['100%'] = produced.toString();
-        performanceData[currentRow]['70%'] = target70.toString();
-        performanceData[currentRow]['Rendimento'] =
-            _calculatePerformance(produced, target70);
+      if (fillAllRows) {
+        for (var i = 0; i < performanceData.length; i++) {
+          performanceData[i]['100%'] = produced.toString();
+          performanceData[i]['70%'] = target70.toString();
+          performanceData[i]['Rendimento'] =
+              _calculatePerformance(produced, target70);
+        }
+        currentRow = 0;
+      } else {
+        if (currentRow < performanceData.length) {
+          performanceData[currentRow]['100%'] = produced.toString();
+          performanceData[currentRow]['70%'] = target70.toString();
+          performanceData[currentRow]['Rendimento'] =
+              _calculatePerformance(produced, target70);
 
-        currentRow++;
+          currentRow++;
+        }
       }
 
       stopwatch.reset();
@@ -206,6 +221,17 @@ class _PerformancePageState extends State<PerformancePage> {
     } catch (e) {
       _showSnackBar('Erro ao salvar rendimento: $e');
     }
+  }
+
+  bool _isTableComplete() {
+    for (var entry in performanceData) {
+      if (entry['100%'] == 'N/A' ||
+          entry['70%'] == 'N/A' ||
+          entry['Rendimento'] == 'N/A') {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _clearSharedPreferences() async {
@@ -350,9 +376,13 @@ class _PerformancePageState extends State<PerformancePage> {
             TimerControls(
               isTiming: isTiming,
               elapsedTime: _formatTime(stopwatch.elapsed),
-              onStart:
-                  currentRow < timeSlots.length ? _showTimingOptions : null,
+              onStart: currentRow < timeSlots.length && !_isTableComplete()
+                  ? _showTimingOptions
+                  : null,
               onStop: _stopTiming,
+              fillAllRows: fillAllRows,
+              onFillAllRowsChanged: (value) =>
+                  setState(() => fillAllRows = value ?? false),
             ),
             SizedBox(height: 10),
             _buildSaveButton(),

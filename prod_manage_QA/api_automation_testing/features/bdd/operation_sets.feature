@@ -14,6 +14,7 @@ Feature: Operation Sets Management
     When the user submits valid updates for an existing set
     Then the system should successfully update the operation sets
 
+  @delete
   Scenario: Deleting an set
     Given the user has permission to delete operation sets
     When the user initiates the deletion of an set record

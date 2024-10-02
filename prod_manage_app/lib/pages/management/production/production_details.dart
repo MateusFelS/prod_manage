@@ -32,6 +32,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
   Future<void> _loadImage() async {
     try {
       final image = await _apiService.getImage(widget.cut['id']);
+      if (!mounted) return;
       setState(() {
         _imageBuffer = image;
       });
@@ -52,6 +53,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
             .addAll(operationRecords.cast<Map<String, dynamic>>());
       }
 
+      if (!mounted) return;
       setState(() {
         _operationRecords = allOperationRecords;
       });
