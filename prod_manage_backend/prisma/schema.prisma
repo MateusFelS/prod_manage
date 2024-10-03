@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url = "postgresql://prod_manage_database_7ybf_user:PKRi8AMITcoTJw5gLPrhmP7VIAHA2zBk@dpg-crs6kfrtq21c73dcl4qg-a.oregon-postgres.render.com/prod_manage_database_7ybf"
+  url = "postgresql://prod_manage_database_wc8j_user:FCk9JVRNMXgCMwsbXyNI0tZ98dAJ1Rta@dpg-cruvnp5ds78s73a5nan0-a.oregon-postgres.render.com/prod_manage_database_wc8j"
 }
 generator client {
   provider = "prisma-client-js"
