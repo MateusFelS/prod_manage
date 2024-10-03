@@ -32,15 +32,7 @@ model CutRecord {
 model OperationRecord {
   id             Int      @id @default(autoincrement())
   operationName  String   @unique
-  calculatedTime String  
   createdAt      DateTime @default(now())
-}
-
-model OperationSet {
-  id              Int               @id @default(autoincrement())
-  setName         String            @unique
-  createdAt       DateTime          @default(now())
-  operationRecords Json     
 }
 
 model Employee {

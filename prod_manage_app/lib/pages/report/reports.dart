@@ -34,11 +34,12 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _fetchOperationSets() async {
     try {
-      List operationSets = await _apiService.fetchOperationSets();
+      List operationSets = await _apiService.fetchOperationRecords();
       if (!mounted) return;
       setState(() {
-        _operationSets =
-            operationSets.map((set) => set['setName'].toString()).toList();
+        _operationSets = operationSets
+            .map((set) => set['operationName'].toString())
+            .toList();
         if (_operationSets.isNotEmpty) {
           _selectedOperationSet = _operationSets[0];
         }
@@ -84,20 +85,26 @@ class _ReportsPageState extends State<ReportsPage> {
     Map<String, double> productionByDate = {};
 
     List filteredPerformances = performances.where((performance) {
-      return performance['schedules']['operationSet'].any((operation) {
-        return operation['setName'] == _selectedOperationSet;
-      });
+      var schedule = performance['schedules'];
+
+      return schedule['operation'] == _selectedOperationSet;
     }).toList();
 
     for (var performance in filteredPerformances) {
-      int produced = performance['schedules']['piecesMade'];
       String date = performance['date'].split('T')[0];
 
-      if (!productionByDate.containsKey(date)) {
-        productionByDate[date] = 0.0;
-      }
+      var schedule = performance['schedules'];
 
-      productionByDate[date] = productionByDate[date]! + produced;
+      if (schedule['operation'] == _selectedOperationSet) {
+        int produced = schedule['piecesMade'];
+
+        // Somando a produção por data
+        if (!productionByDate.containsKey(date)) {
+          productionByDate[date] = 0.0;
+        }
+
+        productionByDate[date] = productionByDate[date]! + produced;
+      }
     }
 
     setState(() {

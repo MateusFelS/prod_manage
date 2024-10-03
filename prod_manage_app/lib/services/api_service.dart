@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class ApiService {
-  final String _baseUrl = 'https://prod-manage-backend.onrender.com';
+  final String _baseUrl = 'http://192.168.1.8:3000';
+  //final String _baseUrl = 'https://prod-manage-backend.onrender.com';
   final Map<String, String> _jsonHeaders = {'Content-Type': 'application/json'};
 
   // Helper methods to handle responses
@@ -169,32 +170,13 @@ class ApiService {
     }).toList();
   }
 
-  // Operation Set API
-  Future<List<dynamic>> fetchOperationSets() async {
-    return _getRequest('operation-set');
-  }
+  Future<void> deleteOperationRecord(int operationId) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/operations/$operationId'),
+    );
 
-  Future<void> saveOperationSet(Map<String, dynamic> operationsSet) async {
-    final url = Uri.parse('$_baseUrl/operation-set');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(operationsSet),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Conjunto de operações salvo com sucesso');
-      } else {
-        throw Exception(
-            'Erro ao salvar o conjunto de operações: ${response.body}');
-      }
-    } catch (e) {
-      print('Erro na requisição: $e');
-      throw Exception('Falha ao salvar o conjunto de operações.');
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao excluir operação');
     }
   }
 

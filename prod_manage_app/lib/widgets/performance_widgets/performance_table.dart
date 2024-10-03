@@ -5,12 +5,14 @@ class PerformanceTable extends StatefulWidget {
   final List<Map<String, String>> performanceData;
   final Function(int, String) onPerformanceChanged;
   final Function(int, String, String) onMetaChanged;
+  final List<String> operations;
 
   PerformanceTable({
     required this.timeSlots,
     required this.performanceData,
     required this.onPerformanceChanged,
     required this.onMetaChanged,
+    required this.operations,
   });
 
   @override
@@ -27,6 +29,7 @@ class _PerformanceTableState extends State<PerformanceTable> {
         1: FlexColumnWidth(1),
         2: FlexColumnWidth(1),
         3: FlexColumnWidth(2),
+        4: FlexColumnWidth(2),
       },
       children: [
         TableRow(
@@ -38,6 +41,7 @@ class _PerformanceTableState extends State<PerformanceTable> {
             _buildTableCell('100%', isHeader: true),
             _buildTableCell('70%', isHeader: true),
             _buildTableCell('Rendimento', isHeader: true),
+            _buildTableCell('Operações', isHeader: true), // Nova coluna
           ],
         ),
         for (int i = 0; i < widget.timeSlots.length; i++)
@@ -50,9 +54,69 @@ class _PerformanceTableState extends State<PerformanceTable> {
               _buildEditableCell(i, '100%'),
               _buildEditableCell(i, '70%'),
               _buildEditableTableCell(i),
+              _buildOperationsCell(i),
             ],
           ),
       ],
+    );
+  }
+
+  Widget _buildOperationsCell(int index) {
+    String operationName = widget.performanceData[index]['operationName'] ?? '';
+
+    return GestureDetector(
+      onTap: () {
+        _showOperationsDialog(index);
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          height: 50,
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              operationName.isEmpty ? 'Operação' : operationName,
+              style: TextStyle(
+                color: operationName.isEmpty ? Colors.grey : Colors.black,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showOperationsDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Escolha uma operação',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown.shade900,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: widget.operations.map((operation) {
+              return ListTile(
+                title: Text(operation),
+                onTap: () {
+                  setState(() {
+                    widget.performanceData[index]['operationName'] = operation;
+                  });
+                  Navigator.of(context).pop();
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -98,6 +162,7 @@ class _PerformanceTableState extends State<PerformanceTable> {
           title: Text(
             'Editar $key',
             style: TextStyle(
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.brown.shade900,
             ),

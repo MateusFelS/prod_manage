@@ -48,6 +48,7 @@ class _PerformancePageState extends State<PerformancePage> {
 
   List<dynamic> _cutRecords = [];
   String? _roleTitle;
+  List<String> _operations = [];
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _PerformancePageState extends State<PerformancePage> {
     _loadPerformanceData();
     _fetchCutRecords();
     _fetchRoleTitle();
+    _fetchOperationRecords();
   }
 
   @override
@@ -62,6 +64,23 @@ class _PerformancePageState extends State<PerformancePage> {
     _savePerformanceData();
     timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _fetchOperationRecords() async {
+    try {
+      final operations = await apiService.fetchOperationRecords();
+      if (mounted) {
+        setState(() {
+          _operations = operations.map((operation) {
+            return operation['operationName']?.toString() ?? '';
+          }).toList();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Erro ao buscar registros de operações: $e');
+      }
+    }
   }
 
   Future<void> _fetchCutRecords() async {
@@ -141,17 +160,18 @@ class _PerformancePageState extends State<PerformancePage> {
 
     String overallEfficiency =
         _calculatePerformance(totalProduced, totalTarget70);
-    final selectedCutRecord = _cutRecords.firstWhere(
-      (record) => record['code'] == selectedCut,
-      orElse: () => null,
-    );
+
+    String? lastOperation;
+    if (_operations.isNotEmpty) {
+      lastOperation = _operations.last;
+    }
 
     return {
       'piecesMade': totalProduced,
       'target100': totalTarget100,
       'target70': totalTarget70,
       'efficiency': overallEfficiency,
-      'operationSet': selectedCutRecord['selectedOperations'],
+      'operation': lastOperation,
     };
   }
 
@@ -369,6 +389,7 @@ class _PerformancePageState extends State<PerformancePage> {
                   performanceData: performanceData,
                   onPerformanceChanged: _handlePerformanceChanged,
                   onMetaChanged: _handleMetaChanged,
+                  operations: _operations,
                 ),
               ),
             ),
@@ -399,7 +420,7 @@ class _PerformancePageState extends State<PerformancePage> {
         return AlertDialog(
           title: Text('Como funciona a tabela de rendimento?',
               style: TextStyle(fontSize: 18)),
-          content: SingleChildScrollView(
+          content: const SingleChildScrollView(
             child: ListBody(
               children: [
                 Text(

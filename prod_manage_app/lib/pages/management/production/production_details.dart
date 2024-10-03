@@ -26,7 +26,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     super.initState();
     _currentStatus = widget.cut['status'];
     _loadImage();
-    _loadOperationRecords();
   }
 
   Future<void> _loadImage() async {
@@ -39,46 +38,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     } catch (e) {
       print("Erro ao carregar a imagem do banco de dados: $e");
     }
-  }
-
-  Future<void> _loadOperationRecords() async {
-    try {
-      final selectedOperations =
-          widget.cut['selectedOperations'] as List<dynamic>;
-
-      List<Map<String, dynamic>> allOperationRecords = [];
-      for (var set in selectedOperations) {
-        final operationRecords = set['operationRecords'] as List<dynamic>;
-        allOperationRecords
-            .addAll(operationRecords.cast<Map<String, dynamic>>());
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _operationRecords = allOperationRecords;
-      });
-    } catch (e) {
-      print("Erro ao carregar os registros de operação: $e");
-    }
-  }
-
-  double _convertTimeStringToMinutes(String timeString) {
-    final parts = timeString.split(':');
-    if (parts.length != 3) return 0.0;
-
-    final hours = double.tryParse(parts[0]) ?? 0.0;
-    final minutes = double.tryParse(parts[1]) ?? 0.0;
-    final seconds = double.tryParse(parts[2]) ?? 0.0;
-
-    return hours * 60 + minutes + (seconds / 60);
-  }
-
-  String _convertMinutesToTimeString(double totalMinutes) {
-    final int hours = totalMinutes ~/ 60;
-    final int minutes = (totalMinutes % 60).toInt();
-    final int seconds = ((totalMinutes - totalMinutes.toInt()) * 60).toInt();
-
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _updateStatus() async {
@@ -138,8 +97,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                       color: Colors.brown.shade900,
                     ),
                   ),
-                  SizedBox(height: 10),
-                  _buildOperationList(),
                   SizedBox(height: 10),
                   Text(
                     'Status:',
@@ -258,48 +215,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildOperationList() {
-    return Card(
-      elevation: 4,
-      color: Colors.brown.shade100,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: _operationRecords.length,
-          itemBuilder: (context, index) {
-            final record = _operationRecords[index];
-            final timeString = record['calculatedTime'] ?? '00:00:00';
-            final timeInMinutes = _convertTimeStringToMinutes(timeString);
-            final quantity =
-                (widget.cut['pieceAmount'] as num?)?.toDouble() ?? 0.0;
-            final totalTime = timeInMinutes * quantity;
-
-            final String formattedTotalTime =
-                _convertMinutesToTimeString(totalTime);
-
-            return ListTile(
-              title: Text(
-                '${record['operationName']}',
-                style: TextStyle(
-                    color: Colors.brown.shade800, fontWeight: FontWeight.bold),
-              ),
-              trailing: Text(
-                'tempo - $formattedTotalTime',
-                style: TextStyle(
-                    color: Colors.brown.shade800, fontWeight: FontWeight.bold),
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 

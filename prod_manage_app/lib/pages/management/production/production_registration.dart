@@ -24,32 +24,9 @@ class _ProductionRegistrationPageState
 
   final ApiService _apiService = ApiService();
 
-  List<dynamic> _operations = [];
-  int? _selectedOperationId;
-
   @override
   void initState() {
     super.initState();
-    _fetchOperations();
-  }
-
-  Future<void> _fetchOperations() async {
-    try {
-      final operations = await _apiService.fetchOperationSets();
-      print('Operações recebidas: $operations');
-
-      if (mounted) {
-        setState(() {
-          _operations = operations;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -89,10 +66,6 @@ class _ProductionRegistrationPageState
       final String status = "Em progresso";
       final DateTime? limiteDate = _limiteDate;
 
-      List<dynamic> selectedOperations = _operations
-          .where((operation) => operation['id'] == _selectedOperationId)
-          .toList();
-
       final Map<String, dynamic> data = {
         "code": code,
         "pieceAmount": pieceAmount,
@@ -102,7 +75,6 @@ class _ProductionRegistrationPageState
         "comment": comment,
         "supplier": supplier,
         "status": status,
-        "selectedOperations": selectedOperations,
       };
 
       try {
@@ -217,28 +189,6 @@ class _ProductionRegistrationPageState
                     Icons.comment,
                   ),
                   SizedBox(height: 16.0),
-                  DropdownButtonFormField<int>(
-                    value: _selectedOperationId,
-                    hint: Text('Selecione a Operação *'),
-                    onChanged: (int? newValue) {
-                      setState(() {
-                        _selectedOperationId = newValue;
-                      });
-                    },
-                    items: _operations.map<DropdownMenuItem<int>>((operation) {
-                      return DropdownMenuItem<int>(
-                        value: operation['id'],
-                        child: Text(operation['setName']),
-                      );
-                    }).toList(),
-                    validator: _dropdownValidator,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.0),
                   _buildTextFormField(
                     TextEditingController(
                         text: _limiteDate == null
@@ -317,10 +267,6 @@ class _ProductionRegistrationPageState
 
   String? _notEmptyValidator(String? value) {
     return (value == null || value.isEmpty) ? 'Campo obrigatório' : null;
-  }
-
-  String? _dropdownValidator(int? value) {
-    return (value == null) ? 'Selecione uma operação' : null;
   }
 
   Widget _buildTitle(String title) {

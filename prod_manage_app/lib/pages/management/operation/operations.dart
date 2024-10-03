@@ -10,63 +10,94 @@ class OperationPage extends StatefulWidget {
 
 class _OperationPageState extends State<OperationPage> {
   bool isTiming = false;
-  String elapsedTime = "00:00:00";
-  String finalTime = "";
-  Timer? _timer;
-  int _seconds = 0;
-
   final TextEditingController _operationNameController =
       TextEditingController();
   final ApiService _apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
 
+  List<Map<String, dynamic>> _operations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOperations(); // Chama o método para buscar operações na inicialização
+  }
+
   @override
   void dispose() {
-    _timer?.cancel();
-
     _operationNameController.dispose();
     super.dispose();
   }
 
+  Future<void> _fetchOperations() async {
+    try {
+      List<Map<String, dynamic>> operations = await _apiService
+          .fetchOperationRecords(); // Método na ApiService que deve ser implementado
+      setState(() {
+        _operations = operations;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao buscar operações: $e')),
+      );
+    }
+  }
+
   Future<void> _saveRecord() async {
-    if (_seconds > 0 || finalTime.isNotEmpty) {
-      if (_formKey.currentState!.validate()) {
-        String operationName = _operationNameController.text;
-        String calculatedTime = finalTime;
+    if (_formKey.currentState!.validate()) {
+      String operationName = _operationNameController.text;
 
-        final Map<String, dynamic> data = {
-          "operationName": operationName,
-          "calculatedTime": calculatedTime,
-        };
+      final Map<String, dynamic> data = {
+        "operationName": operationName,
+      };
 
-        try {
-          await _apiService.saveOperationRecord(data);
+      try {
+        await _apiService.saveOperationRecord(data);
+        setState(() {
+          _operations.add(data); // Adiciona o mapa à lista
+        });
 
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text('Registro de Operação salvo com sucesso!')),
-            );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Registro de Operação salvo com sucesso!')),
+          );
 
-            Navigator.of(context).pop();
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Erro ao salvar registro: $e')),
-            );
-          }
+          _operationNameController.clear();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao salvar registro: $e')),
+          );
         }
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Você deve iniciar e parar o cronômetro pelo menos uma vez antes de salvar o registro'),
+            content: Text('Por favor, preencha todos os campos obrigatórios.'),
           ),
         );
       }
+    }
+  }
+
+  void _deleteOperation(int index) async {
+    final operationId = _operations[index]['id'];
+
+    try {
+      await _apiService.deleteOperationRecord(operationId);
+      setState(() {
+        _operations.removeAt(index);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Operação excluída com sucesso!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao excluir operação: $e')),
+      );
     }
   }
 
@@ -96,55 +127,9 @@ class _OperationPageState extends State<OperationPage> {
                     _buildTextFormField(_operationNameController,
                         'Nome da Operação', Icons.build),
                     SizedBox(height: 10),
-                    if (finalTime.isNotEmpty)
-                      Text(
-                        'Tempo calculado: $finalTime',
-                        style: TextStyle(
-                          color: Colors.brown.shade800,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    SizedBox(height: 10),
-                    Center(
-                      child: TimerControls(
-                        isTiming: isTiming,
-                        elapsedTime: elapsedTime,
-                        onStart: _startTimer,
-                        onStop: _stopTimer,
-                      ),
-                    ),
+                    _buildSaveButton(),
                     SizedBox(height: 20),
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.brown.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4.0,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildButtonWithIcon(
-                            icon: Icons.save,
-                            label: 'Salvar',
-                            onPressed: _saveRecord,
-                          ),
-                          _buildButtonWithIcon(
-                            icon: Icons.add,
-                            label: 'Criar Conjunto',
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/operation-set'),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildOperationsList(),
                   ],
                 ),
               ),
@@ -155,62 +140,74 @@ class _OperationPageState extends State<OperationPage> {
     );
   }
 
-  Widget _buildButtonWithIcon({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ElevatedButton(
-          onPressed: onPressed,
-          child: Icon(icon, size: 30),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.brown.shade400,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
+  Widget _buildOperationsList() {
+    return Expanded(
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        color: Colors.brown.shade100,
+        elevation: 4,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0), // Adicionando espaçamento
+              child: Text(
+                'Operações Cadastradas',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold, // Opcional: deixá-lo em negrito
+                  fontSize: 18, // Ajuste o tamanho conforme necessário
+                  color: Colors.brown.shade900, // Cor do título
+                ),
+              ),
             ),
-            padding: EdgeInsets.all(16),
-          ),
+            Expanded(
+              // Adicionando Expanded aqui
+              child: ListView.builder(
+                itemCount: _operations.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(
+                      _operations[index]['operationName'],
+                      style: TextStyle(color: Colors.brown.shade900),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteOperation(index),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.brown.shade900,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  void _startTimer() {
-    setState(() {
-      isTiming = true;
-      finalTime = "";
-      _seconds = 0;
-      elapsedTime = _formatElapsedTime(_seconds);
-    });
-
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _seconds++;
-        elapsedTime = _formatElapsedTime(_seconds);
-      });
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-    setState(() {
-      isTiming = false;
-      finalTime = elapsedTime;
-      _seconds = 0;
-      elapsedTime = _formatElapsedTime(_seconds);
-    });
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * .8,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _saveRecord,
+        child: Text(
+          'Salvar',
+          style: TextStyle(fontSize: 20),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.brown.shade400,
+          foregroundColor: Colors.brown.shade50,
+          textStyle: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatElapsedTime(int seconds) {
@@ -250,79 +247,6 @@ class _OperationPageState extends State<OperationPage> {
         ),
         prefixIcon: Icon(icon, color: Colors.brown.shade800),
       ),
-    );
-  }
-}
-
-class TimerControls extends StatelessWidget {
-  final bool isTiming;
-  final String elapsedTime;
-  final VoidCallback onStart;
-  final VoidCallback onStop;
-
-  TimerControls({
-    required this.isTiming,
-    required this.elapsedTime,
-    required this.onStart,
-    required this.onStop,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: isTiming ? _buildStopButton(context) : _buildStartButton(context),
-    );
-  }
-
-  Widget _buildStartButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onStart,
-      child: Text('Iniciar Cronômetro'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.brown.shade400,
-        foregroundColor: Colors.white,
-        textStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-        fixedSize: Size(MediaQuery.of(context).size.width * .8, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStopButton(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          elapsedTime,
-          style: TextStyle(
-            color: Colors.brown.shade800,
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: onStop,
-          child: Text('Parar Cronômetro'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.brown.shade400,
-            foregroundColor: Colors.white,
-            textStyle: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            fixedSize: Size(MediaQuery.of(context).size.width * .8, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
