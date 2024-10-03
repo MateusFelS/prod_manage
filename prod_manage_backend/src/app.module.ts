@@ -6,10 +6,9 @@ import { PerformanceModule } from './performance/performance.module';
 import { UserModule } from './users/users.module';
 import { RoleModule } from './roles/role.module';
 import { OperationRecordModule } from './operation_record/operation_record.module';
-import { OperationSetModule } from './operation_set/operation_set.module';
 
 @Module({
-  imports: [EmployeeModule, RoleModule, CutRecordModule, OperationRecordModule, PerformanceModule, UserModule, OperationSetModule],
+  imports: [EmployeeModule, RoleModule, CutRecordModule, OperationRecordModule, PerformanceModule, UserModule],
   providers: [PrismaService],
 })
 export class AppModule {}
