@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class ApiService {
-  final String _baseUrl = 'http://192.168.1.8:3000';
-  //final String _baseUrl = 'https://prod-manage-backend.onrender.com';
+  final String _baseUrl = 'https://prod-manage-backend.onrender.com';
   final Map<String, String> _jsonHeaders = {'Content-Type': 'application/json'};
 
   // Helper methods to handle responses
