@@ -60,7 +60,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
 
 3. Crie o arquivo .env com as seguintes variáveis:
    ```bash
-   DATABASE_URL="mysql://root:@localhost:3306/db_prod_manage"
+   DATABASE_URL="mysql://root:@localhost:3306/db_prod_manage" (exemplo do padrão do XAMPP, altere como preferir)
 
 4. Rode as migrações do banco de dados:
    ```bash
@@ -99,7 +99,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
   * Descrição: Retorna todos os cortes de produção.
 
 * **POST** `/cut-records`
-  * Parâmetros: `{ code: string, supplier: string, line1: string, line2?: string, comment?: string, limiteDate: string }`
+  * Parâmetros: `{ code: string, pieceAmount: int, supplier: string, line1: string, line2?: string, comment?: string, limiteDate: string, status: string (default: "Em progresso"), image?: file}`
   * Descrição: Cria um novo corte de produção.
 
 * **PATCH** `/cut-records/:id`
@@ -119,7 +119,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
   * Descrição: Retorna todos os funcionários.
 
 * **POST** `/employees`
-  * Parâmetros: `{ name: string, role: string, entryDate: DateTime }`
+  * Parâmetros: `{ name: string, roleId: int, entryDate: DateTime, temporary: boolean }`
   * Descrição: Cria um novo funcionário.
 
 * **GET** `/employees/:id`
@@ -134,12 +134,11 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
   * Descrição: Retorna todos os registros de performance dos funcionários.
 
 * **POST** `/performances`
-  * Parâmetros: `{ employeeId: number, produced: number, goal: number, schedule: string }`
+  * Parâmetros: `{ employeeId: int, date: DateTime, produced: int, meta: int, schedule: JSON, isCompleted: boolean }`
   * Descrição: Cria um novo registro de performance para um funcionário.
 
-* **PATCH** `/performances/:id`
-  * Parâmetros: `{ produced: number, goal: number }`
-  * Descrição: Atualiza um registro de performance.
+* **GET** `/performances/:id`
+  * Descrição: Retorna os detalhes de um rendimento específico.
 
 * **DELETE** `/performances/:id`
   * Descrição: Exclui um registro de performance.
@@ -150,7 +149,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
   * Descrição: Retorna todos os cargos disponíveis.
 
 * **POST** `/roles`
-  * Parâmetros: `{ title: string, description: string }`
+  * Parâmetros: `{ title: string }`
   * Descrição: Cria um novo cargo.
 
 * **GET** `/roles/:id`
@@ -165,7 +164,7 @@ O objetivo principal é otimizar o processo de produção, oferecendo uma ferram
   * Descrição: Retorna todos os registros de operação.
 
 * **POST** `/operation-records`
-  * Parâmetros: `{ cutType: string, operationName: string, calculatedTime: string }`
+  * Parâmetros: `{ operationName: string }`
   * Descrição: Cria um novo registro de operação.
 
 * **GET** `/operation-records/:id`
