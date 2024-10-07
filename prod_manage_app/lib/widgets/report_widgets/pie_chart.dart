@@ -12,6 +12,25 @@ class PieChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (percentAcimaDaMedia <= 0 && percentAbaixoDaMedia <= 0) {
+      return Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              'Nenhum dado encontrado para esse filtro',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+            ),
+          ),
+        ),
+      );
+    }
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(

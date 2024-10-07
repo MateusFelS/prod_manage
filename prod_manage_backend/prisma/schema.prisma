@@ -1,7 +1,8 @@
 datasource db {
   provider = "postgresql"
-  url = "postgresql://prod_manage_database_7ybf_user:PKRi8AMITcoTJw5gLPrhmP7VIAHA2zBk@dpg-crs6kfrtq21c73dcl4qg-a.oregon-postgres.render.com/prod_manage_database_7ybf"
+  url = "postgresql://prod_manage_database_8k48_user:9YiowGRR7uveBQJg9CZMKTHfrzqxDPYj@dpg-crvg5io8fa8c7399uprg-a.oregon-postgres.render.com/prod_manage_database_8k48"
 }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -40,6 +41,7 @@ model Employee {
   name         String
   roleId       Int
   entryDate    DateTime
+  temporary    Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
   performances Performance[] 

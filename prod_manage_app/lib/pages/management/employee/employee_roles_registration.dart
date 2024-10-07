@@ -11,26 +11,31 @@ class EmployeeRoleRegistrationPage extends StatefulWidget {
 class _EmployeeRoleRegistrationPageState
     extends State<EmployeeRoleRegistrationPage> {
   final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   final ApiService _apiService = ApiService();
+  List<Map<String, dynamic>> _roles = [];
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadRoles();
+  }
+
+  void _loadRoles() async {
+    final response = await _apiService.fetchRoles();
+
+    setState(() {
+      _roles = List<Map<String, dynamic>>.from(response);
+    });
   }
 
   void _saveRole() async {
     if (_formKey.currentState!.validate()) {
       final String title = _titleController.text;
-      final String description = _descriptionController.text;
 
       final Map<String, dynamic> data = {
         "title": title,
-        "description": description,
       };
 
       final response = await _apiService.postRole(data);
@@ -38,10 +43,34 @@ class _EmployeeRoleRegistrationPageState
       if (response.statusCode == 201) {
         _showSnackBar('Função adicionada com sucesso!');
         _titleController.clear();
-        _descriptionController.clear();
-        Navigator.of(context).pop();
-      } else
+
+        setState(() {
+          _roles.add({"title": title});
+        });
+      } else {
         _showSnackBar('Erro ao adicionar função: ${response.reasonPhrase}');
+      }
+    }
+  }
+
+  void _deleteRole(int index) async {
+    final role = _roles[index];
+
+    if (role['id'] == null) {
+      _showSnackBar('Erro: ID da função não encontrado');
+      return;
+    }
+
+    final int roleId = role['id'];
+    final response = await _apiService.deleteRole(roleId);
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _roles.removeAt(index);
+      });
+      _showSnackBar('Função excluída com sucesso!');
+    } else {
+      _showSnackBar('Erro ao excluir função: ${response.reasonPhrase}');
     }
   }
 
@@ -83,8 +112,7 @@ class _EmployeeRoleRegistrationPageState
                     SizedBox(height: 20),
                     _buildTextField(_titleController, 'Título da Função', true),
                     SizedBox(height: 20),
-                    _buildTextField(
-                        _descriptionController, 'Descrição da Função', false),
+                    _buildRolesList(),
                     SizedBox(height: 20),
                     Container(
                       width: double.infinity,
@@ -110,6 +138,51 @@ class _EmployeeRoleRegistrationPageState
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRolesList() {
+    return Expanded(
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        color: Colors.brown.shade100,
+        elevation: 4,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Funções Cadastradas',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.brown.shade900,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _roles.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(
+                      _roles[index]['title'],
+                      style: TextStyle(color: Colors.brown.shade900),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteRole(index),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:prod_manage/pages/report/full_history.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
 import 'package:prod_manage/services/api_service.dart';
 import 'package:prod_manage/widgets/report_widgets/bar_chart.dart';
@@ -13,11 +14,12 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   final ApiService _apiService = ApiService();
-  String _selectedPeriod = '7 Dias';
+  bool _isDiarist = false;
   double _percentAcimaDaMedia = 0.0;
   double _percentAbaixoDaMedia = 0.0;
 
   List<dynamic> _employees = [];
+
   int? _selectedEmployeeId;
   Map<String, double> _employeePerformance = {};
   Map<String, double> _operationPerformance = {};
@@ -85,37 +87,37 @@ class _ReportsPageState extends State<ReportsPage> {
     Map<String, double> productionByDate = {};
 
     List filteredPerformances = performances.where((performance) {
-      var schedule = performance['schedules'];
-
-      return schedule['operation'] == _selectedOperationSet;
+      return performance['schedules']['operations'] != null &&
+          performance['schedules']['operations']
+              .containsKey(_selectedOperationSet);
     }).toList();
 
     for (var performance in filteredPerformances) {
-      String date = performance['date'].split('T')[0];
+      String date = _extractDate(performance['date']);
+      var operations = performance['schedules']['operations'];
 
-      var schedule = performance['schedules'];
+      if (operations != null && operations[_selectedOperationSet] != null) {
+        int produced = operations[_selectedOperationSet];
 
-      if (schedule['operation'] == _selectedOperationSet) {
-        int produced = schedule['piecesMade'];
-
-        // Somando a produção por data
-        if (!productionByDate.containsKey(date)) {
-          productionByDate[date] = 0.0;
-        }
-
+        productionByDate.putIfAbsent(date, () => 0.0);
         productionByDate[date] = productionByDate[date]! + produced;
       }
     }
 
     setState(() {
       _operationPerformance = productionByDate;
+      print(_operationPerformance);
     });
+  }
+
+  String _extractDate(String dateTimeString) {
+    return dateTimeString.split('T')[0];
   }
 
   double _getMaxYValueForOperationPerformance() {
     return _operationPerformance.isEmpty
         ? 10000
-        : _operationPerformance.values.reduce((a, b) => a > b ? a : b) + 5000;
+        : _operationPerformance.values.reduce((a, b) => a > b ? a : b) + 2000;
   }
 
   void _processEmployeePerformanceData(List performances) {
@@ -137,7 +139,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
   void _calculatePerformanceAverages(
       Map<int, Map<String, List<dynamic>>> employeeGroupedPerformances) {
-    int totalEmployees = employeeGroupedPerformances.length;
+    int totalEmployees = 0;
     int aboveAverageCount = 0;
     int belowAverageCount = 0;
 
@@ -146,33 +148,77 @@ class _ReportsPageState extends State<ReportsPage> {
     DateTime startDate = now.subtract(Duration(days: daysBack));
 
     employeeGroupedPerformances.forEach((employeeId, dailyPerformances) {
-      int totalDays = 0;
-      int daysAboveAverage = 0;
-      int daysBelowAverage = 0;
+      var employee = _employees.firstWhere((e) => e['id'] == employeeId);
 
-      dailyPerformances.forEach((date, performancesOnDate) {
-        DateTime currentDate = DateTime.parse(date);
-        if (currentDate.isAfter(startDate)) {
-          totalDays++;
-          int acceptableCount = performancesOnDate
-              .where((p) => p['schedules']['efficiency'] == 'Aceitável')
-              .length;
-          int insufficientCount = performancesOnDate
-              .where((p) => p['schedules']['efficiency'] == 'Insuficiente')
-              .length;
+      // Aqui é onde a alteração ocorre
+      bool isRegistered = employee['temporary'];
 
-          if (acceptableCount >= insufficientCount) {
-            daysAboveAverage++;
-          } else {
-            daysBelowAverage++;
+      if (_isDiarist && isRegistered) {
+        print("Funcionário selecionado: ${employee['name']}, ID: $employeeId");
+
+        int totalDays = 0;
+        int daysAboveAverage = 0;
+        int daysBelowAverage = 0;
+
+        dailyPerformances.forEach((date, performancesOnDate) {
+          DateTime currentDate = DateTime.parse(date);
+          if (currentDate.isAfter(startDate)) {
+            totalDays++;
+            int acceptableCount = performancesOnDate
+                .where((p) => p['schedules']['efficiency'] == 'Aceitável')
+                .length;
+            int insufficientCount = performancesOnDate
+                .where((p) => p['schedules']['efficiency'] == 'Insuficiente')
+                .length;
+
+            if (acceptableCount >= insufficientCount) {
+              daysAboveAverage++;
+            } else {
+              daysBelowAverage++;
+            }
           }
-        }
-      });
+        });
 
-      if (daysAboveAverage > daysBelowAverage) {
-        aboveAverageCount++;
-      } else {
-        belowAverageCount++;
+        if (daysAboveAverage > daysBelowAverage) {
+          aboveAverageCount++;
+        } else {
+          belowAverageCount++;
+        }
+
+        totalEmployees++;
+      } else if (!_isDiarist) {
+        print("Funcionário selecionado: ${employee['name']}, ID: $employeeId");
+
+        int totalDays = 0;
+        int daysAboveAverage = 0;
+        int daysBelowAverage = 0;
+
+        dailyPerformances.forEach((date, performancesOnDate) {
+          DateTime currentDate = DateTime.parse(date);
+          if (currentDate.isAfter(startDate)) {
+            totalDays++;
+            int acceptableCount = performancesOnDate
+                .where((p) => p['schedules']['efficiency'] == 'Aceitável')
+                .length;
+            int insufficientCount = performancesOnDate
+                .where((p) => p['schedules']['efficiency'] == 'Insuficiente')
+                .length;
+
+            if (acceptableCount >= insufficientCount) {
+              daysAboveAverage++;
+            } else {
+              daysBelowAverage++;
+            }
+          }
+        });
+
+        if (daysAboveAverage > daysBelowAverage) {
+          aboveAverageCount++;
+        } else {
+          belowAverageCount++;
+        }
+
+        totalEmployees++;
       }
     });
 
@@ -207,7 +253,7 @@ class _ReportsPageState extends State<ReportsPage> {
   double _getMaxYValueForEmployeePerformance() {
     return _employeePerformance.isEmpty
         ? 10000
-        : _employeePerformance.values.reduce((a, b) => a > b ? a : b) + 5000;
+        : _employeePerformance.values.reduce((a, b) => a > b ? a : b) + 2000;
   }
 
   AxisTitles _buildSideTitles() {
@@ -240,6 +286,8 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    int totalEmployees = _employees.length;
+    int dailyGoal = 34 * totalEmployees;
     return Scaffold(
       appBar: CustomAppBar(title: 'Relatórios'),
       body: SingleChildScrollView(
@@ -250,24 +298,22 @@ class _ReportsPageState extends State<ReportsPage> {
             Row(
               children: [
                 Text(
-                  'Selecione um período:',
+                  'Apenas Registrados',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
-                SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: _selectedPeriod,
-                  items: ['7 Dias', '15 Dias', '30 Dias'].map((period) {
-                    return DropdownMenuItem<String>(
-                      value: period,
-                      child: Text(period),
-                    );
-                  }).toList(),
-                  onChanged: (newPeriod) {
-                    setState(() {
-                      _selectedPeriod = newPeriod!;
-                      _fetchPerformanceData();
-                    });
-                  },
+                Transform.scale(
+                  scale: 0.8,
+                  child: Checkbox(
+                    value: _isDiarist,
+                    checkColor: Colors.white,
+                    activeColor: Colors.brown.shade400,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _isDiarist = value ?? true;
+                        _fetchPerformanceData();
+                      });
+                    },
+                  ),
                 ),
               ],
             ),
@@ -334,8 +380,30 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
             SizedBox(height: 16),
             BarChartWidget(
+              meta: dailyGoal,
               operationPerformance: _operationPerformance,
               maxY: _getMaxYValueForOperationPerformance(),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () async {
+                  await _fetchEmployees();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullHistoryPage(),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Ver histórico completo',
+                  style: TextStyle(
+                      color: Colors.brown.shade800,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),

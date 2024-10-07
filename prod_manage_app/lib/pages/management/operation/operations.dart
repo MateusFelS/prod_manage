@@ -20,7 +20,7 @@ class _OperationPageState extends State<OperationPage> {
   @override
   void initState() {
     super.initState();
-    _fetchOperations(); // Chama o método para buscar operações na inicialização
+    _fetchOperations();
   }
 
   @override
@@ -31,8 +31,8 @@ class _OperationPageState extends State<OperationPage> {
 
   Future<void> _fetchOperations() async {
     try {
-      List<Map<String, dynamic>> operations = await _apiService
-          .fetchOperationRecords(); // Método na ApiService que deve ser implementado
+      List<Map<String, dynamic>> operations =
+          await _apiService.fetchOperationRecords();
       setState(() {
         _operations = operations;
       });
@@ -54,7 +54,7 @@ class _OperationPageState extends State<OperationPage> {
       try {
         await _apiService.saveOperationRecord(data);
         setState(() {
-          _operations.add(data); // Adiciona o mapa à lista
+          _operations.add(data);
         });
 
         if (mounted) {
@@ -127,9 +127,9 @@ class _OperationPageState extends State<OperationPage> {
                     _buildTextFormField(_operationNameController,
                         'Nome da Operação', Icons.build),
                     SizedBox(height: 10),
-                    _buildSaveButton(),
-                    SizedBox(height: 20),
                     _buildOperationsList(),
+                    SizedBox(height: 10),
+                    _buildSaveButton(),
                   ],
                 ),
               ),
@@ -149,35 +149,45 @@ class _OperationPageState extends State<OperationPage> {
         color: Colors.brown.shade100,
         elevation: 4,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0), // Adicionando espaçamento
+              padding: const EdgeInsets.all(8.0),
               child: Text(
                 'Operações Cadastradas',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold, // Opcional: deixá-lo em negrito
-                  fontSize: 18, // Ajuste o tamanho conforme necessário
-                  color: Colors.brown.shade900, // Cor do título
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.brown.shade900,
                 ),
               ),
             ),
             Expanded(
-              // Adicionando Expanded aqui
-              child: ListView.builder(
-                itemCount: _operations.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      _operations[index]['operationName'],
-                      style: TextStyle(color: Colors.brown.shade900),
+              child: _operations.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Nenhuma Operação cadastrada!',
+                        style: TextStyle(
+                          color: Colors.brown.shade900,
+                          fontSize: 14,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _operations.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            _operations[index]['operationName'],
+                            style: TextStyle(color: Colors.brown.shade900),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteOperation(index),
+                          ),
+                        );
+                      },
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteOperation(index),
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),

@@ -43,6 +43,7 @@ class _PerformancePageState extends State<PerformancePage> {
       '100%': 'N/A',
       '70%': 'N/A',
       'Rendimento': 'N/A',
+      'operationName': 'N/A',
     },
   );
 
@@ -119,13 +120,11 @@ class _PerformancePageState extends State<PerformancePage> {
     await prefs.setInt('currentRow_${widget.employee['id']}', currentRow);
 
     for (int i = 0; i < performanceData.length; i++) {
+      String operation = performanceData[i]['operationName'] ?? '';
       await prefs.setString(
-          'performance_${widget.employee['id']}_$i',
-          performanceData[i]['100%']! +
-              ',' +
-              performanceData[i]['70%']! +
-              ',' +
-              performanceData[i]['Rendimento']!);
+        'performance_${widget.employee['id']}_$i',
+        '${performanceData[i]['100%']},${performanceData[i]['70%']},${performanceData[i]['Rendimento']},$operation',
+      );
     }
   }
 
@@ -138,40 +137,50 @@ class _PerformancePageState extends State<PerformancePage> {
       String? data = prefs.getString('performance_${widget.employee['id']}_$i');
       if (data != null) {
         List<String> values = data.split(',');
-        performanceData[i]['100%'] = values[0];
-        performanceData[i]['70%'] = values[1];
-        performanceData[i]['Rendimento'] = values[2];
+
+        if (values.length >= 3) {
+          performanceData[i]['100%'] = values[0];
+          performanceData[i]['70%'] = values[1];
+          performanceData[i]['Rendimento'] = values[2];
+        }
+        if (values.length > 3) {
+          performanceData[i]['operationName'] = values[3];
+        }
       }
     }
   }
 
   Map<String, dynamic> _calculateTotalPerformance() {
-    int totalProduced = 0, totalTarget100 = 0, totalTarget70 = 0;
+    Map<String, int> operationProduction = {};
 
     for (var entry in performanceData) {
+      final operation = entry['operationName'] ?? 'Unknown';
       final performance = int.tryParse(entry['Rendimento'] ?? '0') ?? 0;
-      final target100 = int.tryParse(entry['100%'] ?? '0') ?? 0;
-      final target70 = int.tryParse(entry['70%'] ?? '0') ?? 0;
 
-      totalProduced += performance;
-      totalTarget100 += target100;
-      totalTarget70 += target70;
+      if (operationProduction.containsKey(operation)) {
+        operationProduction[operation] =
+            operationProduction[operation]! + performance;
+      } else {
+        operationProduction[operation] = performance;
+      }
     }
+
+    int totalProduced =
+        operationProduction.values.fold(0, (sum, value) => sum + value);
+    int totalTarget100 = performanceData.fold(
+        0, (sum, entry) => sum + (int.tryParse(entry['100%'] ?? '0') ?? 0));
+    int totalTarget70 = performanceData.fold(
+        0, (sum, entry) => sum + (int.tryParse(entry['70%'] ?? '0') ?? 0));
 
     String overallEfficiency =
         _calculatePerformance(totalProduced, totalTarget70);
-
-    String? lastOperation;
-    if (_operations.isNotEmpty) {
-      lastOperation = _operations.last;
-    }
 
     return {
       'piecesMade': totalProduced,
       'target100': totalTarget100,
       'target70': totalTarget70,
       'efficiency': overallEfficiency,
-      'operation': lastOperation,
+      'operations': operationProduction,
     };
   }
 
@@ -207,7 +216,8 @@ class _PerformancePageState extends State<PerformancePage> {
           performanceData[i]['100%'] = produced.toString();
           performanceData[i]['70%'] = target70.toString();
           performanceData[i]['Rendimento'] =
-              _calculatePerformance(produced, target70);
+              performanceData[i]['Rendimento'] ?? '0';
+          performanceData[i]['operationName'] = selectedCut ?? 'N/A';
         }
         currentRow = 0;
       } else {
@@ -215,8 +225,8 @@ class _PerformancePageState extends State<PerformancePage> {
           performanceData[currentRow]['100%'] = produced.toString();
           performanceData[currentRow]['70%'] = target70.toString();
           performanceData[currentRow]['Rendimento'] =
-              _calculatePerformance(produced, target70);
-
+              performanceData[currentRow]['Rendimento'] ?? '0';
+          performanceData[currentRow]['operationName'] = selectedCut ?? 'N/A';
           currentRow++;
         }
       }
@@ -227,6 +237,7 @@ class _PerformancePageState extends State<PerformancePage> {
 
   Future<void> _saveAllPerformance() async {
     final totalData = _calculateTotalPerformance();
+    print(totalData);
     final data = {
       'employeeId': widget.employee['id'],
       'date': DateTime.now().toIso8601String(),
@@ -247,7 +258,8 @@ class _PerformancePageState extends State<PerformancePage> {
     for (var entry in performanceData) {
       if (entry['100%'] == 'N/A' ||
           entry['70%'] == 'N/A' ||
-          entry['Rendimento'] == 'N/A') {
+          entry['Rendimento'] == 'N/A' ||
+          entry['operationName'] == 'Op.') {
         return false;
       }
     }
@@ -311,9 +323,10 @@ class _PerformancePageState extends State<PerformancePage> {
   }
 
   String _formatTime(Duration duration) {
+    final hour = duration.inHours;
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${hour.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   void _showSnackBar(String message) {
@@ -325,6 +338,73 @@ class _PerformancePageState extends State<PerformancePage> {
     );
   }
 
+  void _showOperationSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.brown.shade50,
+          title: Text(
+            'Selecionar Operação',
+            style: TextStyle(
+              color: Colors.brown.shade800,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SizedBox(
+            height: 150,
+            width: double.maxFinite,
+            child: _operations.isEmpty
+                ? Center(
+                    child: Text(
+                      'Nenhuma operação cadastrada',
+                      style: TextStyle(
+                        color: Colors.brown.shade800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _operations.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                        leading: Icon(Icons.check_circle_outline,
+                            color: Colors.brown.shade800),
+                        title: Text(
+                          _operations[index],
+                          style: TextStyle(
+                            color: Colors.brown.shade800,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            selectedCut = _operations[index];
+                          });
+                          Navigator.of(context).pop();
+                          _showTimingOptions();
+                        },
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.brown.shade800),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showTimingOptions() {
     showModalBottomSheet(
       context: context,
@@ -333,7 +413,6 @@ class _PerformancePageState extends State<PerformancePage> {
           cutRecords: _cutRecords,
           onStart: (selectedCutCode, pieceQty) {
             setState(() {
-              selectedCut = selectedCutCode;
               pieceAmount = pieceQty;
             });
             _startTiming();
@@ -385,7 +464,7 @@ class _PerformancePageState extends State<PerformancePage> {
             Expanded(
               child: SingleChildScrollView(
                 child: PerformanceTable(
-                  timeSlots: timeSlots,
+                  initialTimeSlots: timeSlots,
                   performanceData: performanceData,
                   onPerformanceChanged: _handlePerformanceChanged,
                   onMetaChanged: _handleMetaChanged,
@@ -398,15 +477,14 @@ class _PerformancePageState extends State<PerformancePage> {
               isTiming: isTiming,
               elapsedTime: _formatTime(stopwatch.elapsed),
               onStart: currentRow < timeSlots.length && !_isTableComplete()
-                  ? _showTimingOptions
+                  ? _showOperationSelectionDialog
                   : null,
               onStop: _stopTiming,
               fillAllRows: fillAllRows,
               onFillAllRowsChanged: (value) =>
                   setState(() => fillAllRows = value ?? false),
+              onSave: _checkAndSavePerformanceData,
             ),
-            SizedBox(height: 10),
-            _buildSaveButton(),
           ],
         ),
       ),
@@ -466,30 +544,19 @@ class _PerformancePageState extends State<PerformancePage> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 8.0),
-        Text('Cargo: ${_roleTitle ?? 'Carregando...'}'),
-      ],
-    );
-  }
-
-  TextStyle _employeeTextStyle({double? fontSize, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      color: Colors.brown.shade800,
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width * .8,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: _checkAndSavePerformanceData,
-          child: Text('Salvar Rendimento'),
-          style: _buttonStyle(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Cargo: ${_roleTitle ?? 'Carregando...'}'),
+            Text(
+              'Contrato: ' +
+                  (widget.employee['temporary'] == true
+                      ? 'Diarista'
+                      : 'Registrado'),
+            ),
+          ],
         ),
-      ),
+      ],
     );
   }
 
@@ -497,7 +564,8 @@ class _PerformancePageState extends State<PerformancePage> {
     bool isComplete = performanceData.every((data) =>
         data['100%'] != 'N/A' &&
         data['70%'] != 'N/A' &&
-        data['Rendimento'] != 'N/A');
+        data['Rendimento'] != 'N/A.' &&
+        data['operationName'] != 'Op.');
 
     if (isComplete) {
       await _saveAllPerformance();
@@ -507,19 +575,5 @@ class _PerformancePageState extends State<PerformancePage> {
     } else {
       _showSnackBar('Complete a tabela antes de Salvar');
     }
-  }
-
-  ButtonStyle _buttonStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: Colors.brown.shade400,
-      foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      textStyle: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
   }
 }

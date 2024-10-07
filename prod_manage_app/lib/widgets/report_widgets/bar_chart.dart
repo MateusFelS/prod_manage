@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 class BarChartWidget extends StatelessWidget {
   final Map<String, double> operationPerformance;
   final double maxY;
+  final int meta;
 
-  BarChartWidget({required this.operationPerformance, required this.maxY});
+  BarChartWidget(
+      {required this.operationPerformance,
+      required this.maxY,
+      required this.meta});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +23,18 @@ class BarChartWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Roupas Completas por Dia',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Roupas Completas por Dia',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '(Meta: ${meta.toString()})',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             SizedBox(height: 20),
             SizedBox(
