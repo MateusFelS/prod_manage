@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url = "postgresql://prod_manage_database_8k48_user:9YiowGRR7uveBQJg9CZMKTHfrzqxDPYj@dpg-crvg5io8fa8c7399uprg-a.oregon-postgres.render.com/prod_manage_database_8k48"
+  url = "postgresql://prod_manage_database_mwh8_user:x4fwBugkQQYN9wYNsftKc0JD1ZJ0X2z9@dpg-cs23p93qf0us73a1d7d0-a.oregon-postgres.render.com/prod_manage_database_mwh8"
 }
 
 generator client {
