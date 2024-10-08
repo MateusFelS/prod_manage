@@ -16,7 +16,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
   int _selectedRoleId = 0;
   String _selectedRoleTitle = '';
   DateTime? _selectedDate;
-  bool _isTemporary = false; // Adicionei esta variável
+  bool _isDiarist = false;
 
   final ApiService _apiService = ApiService();
 
@@ -57,7 +57,7 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
           "connect": {"id": _selectedRoleId}
         },
         "entryDate": _selectedDate?.toIso8601String(),
-        "temporary": _isTemporary,
+        "temporary": _isDiarist,
       };
 
       final response = await _apiService.postEmployee(data);
@@ -75,10 +75,10 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
   }
 
   void _showSnackBar(String message) {
-    if (!mounted)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -170,14 +170,14 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
                       SizedBox(height: 20.0),
                       CheckboxListTile(
                         title: Text('Funcionário Temporário'),
-                        value: _isTemporary,
+                        value: _isDiarist,
                         visualDensity: VisualDensity.compact,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         checkColor: Colors.white,
                         activeColor: Colors.brown.shade400,
                         onChanged: (bool? value) {
                           setState(() {
-                            _isTemporary = value ?? false;
+                            _isDiarist = value ?? false;
                           });
                         },
                         controlAffinity: ListTileControlAffinity.leading,

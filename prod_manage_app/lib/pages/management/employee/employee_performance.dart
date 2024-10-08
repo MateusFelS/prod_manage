@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:prod_manage/widgets/performance_widgets/timing_options_sheet.dart';
 import 'dart:async';
+
+import 'package:prod_manage/widgets/performance_widgets/timer/timing_options_sheet.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
-import 'package:prod_manage/widgets/performance_widgets/performance_table.dart';
-import 'package:prod_manage/widgets/performance_widgets/timer_controls.dart';
+import 'package:prod_manage/widgets/performance_widgets/performance_data/performance_table.dart';
+import 'package:prod_manage/widgets/performance_widgets/performance_data/performance_data_manager.dart';
+import 'package:prod_manage/widgets/performance_widgets/timer/timer_controls.dart';
 import 'package:prod_manage/services/api_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PerformancePage extends StatefulWidget {
   final Map<String, dynamic> employee;
@@ -18,6 +19,7 @@ class PerformancePage extends StatefulWidget {
 
 class _PerformancePageState extends State<PerformancePage> {
   final ApiService apiService = ApiService();
+  late PerformanceDataManager performanceDataManager;
 
   int pieceAmount = 0;
   String? selectedCut;
@@ -54,10 +56,18 @@ class _PerformancePageState extends State<PerformancePage> {
   @override
   void initState() {
     super.initState();
+    performanceDataManager =
+        PerformanceDataManager(widget.employee['id'].toString());
     _loadPerformanceData();
-    _fetchCutRecords();
-    _fetchRoleTitle();
-    _fetchOperationRecords();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    await Future.wait([
+      _fetchCutRecords(),
+      _fetchRoleTitle(),
+      _fetchOperationRecords(),
+    ]);
   }
 
   @override
@@ -67,87 +77,60 @@ class _PerformancePageState extends State<PerformancePage> {
     super.dispose();
   }
 
-  Future<void> _fetchOperationRecords() async {
+  Future<void> _fetchDataWithHandling<T>(Future<T> Function() fetchFunction,
+      Function(T) onSuccess, String errorMessage) async {
     try {
-      final operations = await apiService.fetchOperationRecords();
+      final result = await fetchFunction();
       if (mounted) {
+        setState(() => onSuccess(result));
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('$errorMessage: $e');
+      }
+    }
+  }
+
+  Future<void> _fetchOperationRecords() async {
+    await _fetchDataWithHandling<List<dynamic>>(
+      () => apiService.fetchOperationRecords(),
+      (operations) {
         setState(() {
           _operations = operations.map((operation) {
             return operation['operationName']?.toString() ?? '';
           }).toList();
         });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar('Erro ao buscar registros de operações: $e');
-      }
-    }
+      },
+      'Erro ao buscar registros de operações',
+    );
   }
 
   Future<void> _fetchCutRecords() async {
-    try {
-      final records = await apiService.fetchAllCutRecords();
-      if (mounted) {
-        setState(() {
-          _cutRecords = records;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar('Erro: $e');
-      }
-    }
+    await _fetchDataWithHandling(
+      apiService.fetchAllCutRecords,
+      (records) => _cutRecords = records,
+      'Erro ao buscar registros de cortes',
+    );
   }
 
   Future<void> _fetchRoleTitle() async {
-    try {
-      final title = await apiService.fetchRoleTitle(widget.employee['roleId']);
-      if (mounted) {
-        setState(() {
-          _roleTitle = title;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar('Erro ao buscar título do cargo: $e');
-      }
-    }
-  }
-
-  Future<void> _savePerformanceData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    await prefs.setInt('currentRow_${widget.employee['id']}', currentRow);
-
-    for (int i = 0; i < performanceData.length; i++) {
-      String operation = performanceData[i]['operationName'] ?? '';
-      await prefs.setString(
-        'performance_${widget.employee['id']}_$i',
-        '${performanceData[i]['100%']},${performanceData[i]['70%']},${performanceData[i]['Rendimento']},$operation',
-      );
-    }
+    await _fetchDataWithHandling(
+      () => apiService.fetchRoleTitle(widget.employee['roleId']),
+      (title) => _roleTitle = title,
+      'Erro ao buscar título do cargo',
+    );
   }
 
   Future<void> _loadPerformanceData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await performanceDataManager.loadPerformanceData();
+    setState(() {
+      currentRow = performanceDataManager.currentRow;
+      performanceData = performanceDataManager.performanceData;
+    });
+  }
 
-    currentRow = prefs.getInt('currentRow_${widget.employee['id']}') ?? 0;
-
-    for (int i = 0; i < performanceData.length; i++) {
-      String? data = prefs.getString('performance_${widget.employee['id']}_$i');
-      if (data != null) {
-        List<String> values = data.split(',');
-
-        if (values.length >= 3) {
-          performanceData[i]['100%'] = values[0];
-          performanceData[i]['70%'] = values[1];
-          performanceData[i]['Rendimento'] = values[2];
-        }
-        if (values.length > 3) {
-          performanceData[i]['operationName'] = values[3];
-        }
-      }
-    }
+  Future<void> _savePerformanceData() async {
+    await performanceDataManager.savePerformanceData();
   }
 
   Map<String, dynamic> _calculateTotalPerformance() {
@@ -254,37 +237,15 @@ class _PerformancePageState extends State<PerformancePage> {
     }
   }
 
-  bool _isTableComplete() {
-    for (var entry in performanceData) {
-      if (entry['100%'] == 'N/A' ||
-          entry['70%'] == 'N/A' ||
-          entry['Rendimento'] == 'N/A' ||
-          entry['operationName'] == 'Op.') {
-        return false;
-      }
-    }
-    return true;
+  Future<void> _clearSharedPreferences() async {
+    await performanceDataManager.clearPerformanceData();
+    setState(() {
+      performanceData = performanceDataManager.performanceData;
+    });
   }
 
-  Future<void> _clearSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove('currentRow_${widget.employee['id']}');
-
-    for (int i = 0; i < performanceData.length; i++) {
-      await prefs.remove('performance_${widget.employee['id']}_$i');
-    }
-    setState(() {
-      currentRow = 0;
-      performanceData = List.generate(
-          8,
-          (index) => {
-                '100%': 'N/A',
-                '70%': 'N/A',
-                'Rendimento': 'N/A',
-              });
-    });
-    _showSnackBar('Dados de performance limpos com sucesso');
+  bool _isTableComplete() {
+    return performanceDataManager.isTableComplete();
   }
 
   void _confirmClearData() {
@@ -501,8 +462,11 @@ class _PerformancePageState extends State<PerformancePage> {
           content: const SingleChildScrollView(
             child: ListBody(
               children: [
+                Text('1. Escolha uma operação desejada.',
+                    style: TextStyle(fontSize: 12)),
+                SizedBox(height: 5),
                 Text(
-                    '1. Escolha um corte relacionado ao funcionário e o número de peças desejados.',
+                    '2. Escolha um corte relacionado ao funcionário e o número de peças desejados.',
                     style: TextStyle(fontSize: 12)),
                 SizedBox(height: 5),
                 Text(

@@ -59,7 +59,7 @@ class _ReportsPageState extends State<ReportsPage> {
       setState(() {
         _employees = employees;
         if (_employees.isNotEmpty) {
-          _selectedEmployeeId = _employees[0]['id'];
+          _selectedEmployeeId = _filterEmployees()[0]['id'];
           _fetchPerformanceData();
         }
       });
@@ -67,6 +67,13 @@ class _ReportsPageState extends State<ReportsPage> {
       if (!mounted) return;
       _showSnackBar('Erro ao carregar a lista de funcionários: $error');
     }
+  }
+
+  List _filterEmployees() {
+    if (_isDiarist) {
+      return _employees.where((employee) => !employee['temporary']).toList();
+    }
+    return _employees;
   }
 
   Future<void> _fetchPerformanceData() async {
@@ -87,9 +94,22 @@ class _ReportsPageState extends State<ReportsPage> {
     Map<String, double> productionByDate = {};
 
     List filteredPerformances = performances.where((performance) {
-      return performance['schedules']['operations'] != null &&
-          performance['schedules']['operations']
-              .containsKey(_selectedOperationSet);
+      var employee = _employees.firstWhere(
+        (e) => e['id'] == performance['employeeId'],
+        orElse: () => null,
+      );
+      bool isRegistered = employee != null && employee['temporary'];
+
+      if (_isDiarist && !isRegistered) {
+        return performance['schedules']['operations'] != null &&
+            performance['schedules']['operations']
+                .containsKey(_selectedOperationSet);
+      } else if (!_isDiarist) {
+        return performance['schedules']['operations'] != null &&
+            performance['schedules']['operations']
+                .containsKey(_selectedOperationSet);
+      }
+      return false;
     }).toList();
 
     for (var performance in filteredPerformances) {
@@ -150,10 +170,9 @@ class _ReportsPageState extends State<ReportsPage> {
     employeeGroupedPerformances.forEach((employeeId, dailyPerformances) {
       var employee = _employees.firstWhere((e) => e['id'] == employeeId);
 
-      // Aqui é onde a alteração ocorre
       bool isRegistered = employee['temporary'];
 
-      if (_isDiarist && isRegistered) {
+      if (_isDiarist && !isRegistered) {
         print("Funcionário selecionado: ${employee['name']}, ID: $employeeId");
 
         int totalDays = 0;
@@ -310,7 +329,13 @@ class _ReportsPageState extends State<ReportsPage> {
                     onChanged: (bool? value) {
                       setState(() {
                         _isDiarist = value ?? true;
-                        _fetchPerformanceData();
+                        var filteredEmployees = _filterEmployees();
+                        if (filteredEmployees.isNotEmpty) {
+                          _selectedEmployeeId = filteredEmployees[0]['id'];
+                          _fetchPerformanceData();
+                        } else {
+                          _selectedEmployeeId = null;
+                        }
                       });
                     },
                   ),
@@ -332,7 +357,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 SizedBox(width: 16),
                 DropdownButton<int>(
                   value: _selectedEmployeeId,
-                  items: _employees.map((employee) {
+                  items: _filterEmployees().map((employee) {
                     return DropdownMenuItem<int>(
                       value: employee['id'],
                       child: Text(employee['name']),
