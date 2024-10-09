@@ -21,6 +21,14 @@ export class PerformanceController{
         return this.performanceService.getPerformanceById(Number(id));
     }
 
+    @Get('by-date/:employeeId')
+    async getPerformanceByDate(
+        @Param('employeeId') employeeId: string, 
+        @Query('date') date: string
+    ) {
+        return this.performanceService.getPerformanceByDate(Number(employeeId), date);
+    }
+
     @Put(':id')
     async updatePerformance(@Param('id') id: string, @Body() data: Performance){
         return this.performanceService.updatePerformance(Number(id), data);
