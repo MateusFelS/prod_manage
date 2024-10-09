@@ -19,7 +19,7 @@ model CutRecord {
   code           String
   pieceAmount    Int
   line1          String
-  line2          String
+  line2          String?
   limiteDate     DateTime
   comment        String?  
   supplier       String
