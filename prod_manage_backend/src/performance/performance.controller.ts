@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Put } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param, Put, Query } from "@nestjs/common";
 import { PerformanceService } from "./performance.service";
 import { Performance } from "@prisma/client";
 
