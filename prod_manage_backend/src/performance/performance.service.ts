@@ -27,6 +27,16 @@ export class PerformanceService{
       });
     }
 
+    async getPerformanceByDate(employeeId: number, date: string): Promise<Performance[]> {
+        return this.prisma.performance.findMany({
+            where: {
+                employeeId,
+                date: new Date(date),
+            },
+        });
+    }
+
+
     async updatePerformance(id: number, data: Performance): Promise<Performance> {
       return this.prisma.performance.update({
         where: {
