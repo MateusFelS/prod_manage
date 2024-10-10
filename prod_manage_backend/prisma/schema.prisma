@@ -1,6 +1,6 @@
 datasource db {
-  provider = "postgresql"
-  url = "postgresql://prod_manage_database_mwh8_user:x4fwBugkQQYN9wYNsftKc0JD1ZJ0X2z9@dpg-cs23p93qf0us73a1d7d0-a.oregon-postgres.render.com/prod_manage_database_mwh8"
+  provider = "mysql"
+  url = "mysql://root:@localhost:3306/db_prod_manage"
 }
 
 generator client {

@@ -27,12 +27,26 @@ export class PerformanceService{
       });
     }
 
-    async updatePerformance(id: number, data: Performance): Promise<Performance> {
+    async getPerformanceByDate(employeeId: number, date: string): Promise<Performance[]> {
+        return this.prisma.performance.findMany({
+            where: {
+                employeeId,
+                date: new Date(date),
+            },
+        });
+    }
+
+
+    async updatePerformance(id: number, data: Partial<Performance>): Promise<Performance> {
       return this.prisma.performance.update({
         where: {
           id,
         },
-        data
+        data: {
+          ...data,
+          date: new Date(data.date),
+        },
       });
     }
+    
 }

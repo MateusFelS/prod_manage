@@ -50,6 +50,18 @@ class ApiService {
     }
   }
 
+// Generic PUT method
+  Future<http.Response> _putRequest(
+      String endpoint, Map<String, dynamic> data) async {
+    final url = Uri.parse('$_baseUrl/$endpoint');
+    final response = await http.put(
+      url,
+      headers: _jsonHeaders,
+      body: jsonEncode(data),
+    );
+    return response;
+  }
+
   // Generic Patch method
   Future<http.Response> _patchRequest(
       String endpoint, Map<String, dynamic> data) async {
@@ -189,6 +201,17 @@ class ApiService {
     await _processVoidResponse(response, expectedStatusCode: 201);
   }
 
+  Future<void> updatePerformance(
+      int performanceId, Map<String, dynamic> data) async {
+    final response = await _putRequest('performance/$performanceId', data);
+    await _processVoidResponse(response);
+  }
+
+  Future<List<dynamic>> getPerformanceByDate(
+      int employeeId, String date) async {
+    return _getRequest('performance/by-date/$employeeId?date=$date');
+  }
+
   // Employees API
   Future<List<dynamic>> fetchEmployees() async {
     return _getRequest('employees');
@@ -202,6 +225,16 @@ class ApiService {
 
   Future<http.Response> postEmployee(Map<String, dynamic> data) async {
     return _postRequest('employees', data);
+  }
+
+  Future<void> updateEmployee(int employeeId, Map<String, dynamic> data) async {
+    final url = Uri.parse('$_baseUrl/employees/$employeeId');
+    final response = await http.put(
+      url,
+      headers: _jsonHeaders,
+      body: jsonEncode(data),
+    );
+    await _processVoidResponse(response, expectedStatusCode: 200);
   }
 
 // Roles API

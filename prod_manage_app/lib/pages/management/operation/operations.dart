@@ -57,28 +57,25 @@ class _OperationPageState extends State<OperationPage> {
           _operations.add(data);
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registro de Operação salvo com sucesso!')),
-          );
-
-          _operationNameController.clear();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao salvar registro: $e')),
-          );
-        }
-      }
-    } else {
-      if (mounted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Por favor, preencha todos os campos obrigatórios.'),
-          ),
+          SnackBar(content: Text('Registro de Operação salvo com sucesso!')),
+        );
+
+        _operationNameController.clear();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar registro: $e')),
         );
       }
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Por favor, preencha todos os campos obrigatórios.'),
+        ),
+      );
     }
   }
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Put } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param, Put, Query } from "@nestjs/common";
 import { PerformanceService } from "./performance.service";
 import { Performance } from "@prisma/client";
 
@@ -19,6 +19,14 @@ export class PerformanceController{
     @Get(':id')
     async getPerformanceById(@Param('id') id: string) {
         return this.performanceService.getPerformanceById(Number(id));
+    }
+
+    @Get('by-date/:employeeId')
+    async getPerformanceByDate(
+        @Param('employeeId') employeeId: string, 
+        @Query('date') date: string
+    ) {
+        return this.performanceService.getPerformanceByDate(Number(employeeId), date);
     }
 
     @Put(':id')

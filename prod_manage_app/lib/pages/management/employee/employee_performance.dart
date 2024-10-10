@@ -81,13 +81,11 @@ class _PerformancePageState extends State<PerformancePage> {
       Function(T) onSuccess, String errorMessage) async {
     try {
       final result = await fetchFunction();
-      if (mounted) {
-        setState(() => onSuccess(result));
-      }
+      if (!mounted) return;
+      setState(() => onSuccess(result));
     } catch (e) {
-      if (mounted) {
-        _showSnackBar('$errorMessage: $e');
-      }
+      if (!mounted) return;
+      _showSnackBar('$errorMessage: $e');
     }
   }
 
@@ -220,18 +218,31 @@ class _PerformancePageState extends State<PerformancePage> {
 
   Future<void> _saveAllPerformance() async {
     final totalData = _calculateTotalPerformance();
-    print(totalData);
+    final currentDate = DateTime.now();
+
+    final formattedDate = currentDate.toIso8601String().split('T')[0];
+
     final data = {
       'employeeId': widget.employee['id'],
-      'date': DateTime.now().toIso8601String(),
+      'date': formattedDate,
       'schedules': totalData,
       'produced': totalData['piecesMade'],
       'meta': totalData['target70'],
     };
 
     try {
-      await apiService.savePerformance(data);
-      _showSnackBar('Rendimento salvo com sucesso');
+      final existingProgress = await apiService.getPerformanceByDate(
+        widget.employee['id'],
+        formattedDate,
+      );
+
+      if (existingProgress.isNotEmpty) {
+        await apiService.updatePerformance(existingProgress[0]['id'], data);
+        _showSnackBar('Rendimento atualizado com sucesso');
+      } else {
+        await apiService.savePerformance(data);
+        _showSnackBar('Rendimento salvo com sucesso');
+      }
     } catch (e) {
       _showSnackBar('Erro ao salvar rendimento: $e');
     }

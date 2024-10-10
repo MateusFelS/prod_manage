@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prod_manage/pages/management/employee/employee_edit.dart';
 import 'package:prod_manage/services/api_service.dart';
 import 'package:prod_manage/pages/management/employee/employee_performance.dart';
 import 'package:prod_manage/widgets/app_bar.dart';
@@ -30,13 +31,18 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   }
 
   Future<void> _fetchEmployees() async {
-    await _fetchData(
-      fetchMethod: _apiService.fetchEmployees,
-      onSuccess: (employees) => setState(
-          () => _employees = List<Map<String, dynamic>>.from(employees)),
-      errorMessage: 'Erro ao carregar a lista de empregados',
-    );
-  }
+  await _fetchData(
+    fetchMethod: _apiService.fetchEmployees,
+    onSuccess: (employees) {
+      setState(() {
+        _employees = List<Map<String, dynamic>>.from(employees);
+        _employees.sort((a, b) => a['id'].compareTo(b['id']));
+      });
+    },
+    errorMessage: 'Erro ao carregar a lista de empregados',
+  );
+}
+
 
   Future<void> _fetchData({
     required Future<List<dynamic>> Function() fetchMethod,
@@ -103,11 +109,20 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   }
 
   void _showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _navigateToEditEmployeePage(dynamic employee) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            EditEmployeePage(employee: employee, roles: _roles),
+      ),
+    ).then((_) => _fetchEmployees());
   }
 
   @override
@@ -169,12 +184,17 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              icon: Icon(Icons.edit, color: Colors.amber[600]),
+              onPressed: () {
+                _navigateToEditEmployeePage(employee);
+              },
+            ),
+            IconButton(
               icon: Icon(Icons.delete, color: Colors.red),
               onPressed: () {
                 _confirmDeleteEmployee(employee['id']);
               },
             ),
-            Icon(Icons.arrow_forward_ios, color: Colors.brown.shade800),
           ],
         ),
         onTap: () => _navigateToPerformancePage(employee),

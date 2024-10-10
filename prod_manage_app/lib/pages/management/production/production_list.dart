@@ -34,13 +34,11 @@ class _ProductionListPageState extends State<ProductionListPage> {
   }) async {
     try {
       final data = await fetchMethod();
-      if (mounted) {
-        onSuccess(data);
-      }
+      if (!mounted) return;
+      onSuccess(data);
     } catch (e) {
-      if (mounted) {
-        _showSnackBar('$errorMessage: $e');
-      }
+      if (!mounted) return;
+      _showSnackBar('$errorMessage: $e');
     }
   }
 
@@ -155,11 +153,10 @@ class _ProductionListPageState extends State<ProductionListPage> {
   Widget _buildFilterButton(String status) {
     return ElevatedButton(
       onPressed: () {
-        if (mounted) {
-          setState(() {
-            _selectedStatus = status;
-          });
-        }
+        if (!mounted) return;
+        setState(() {
+          _selectedStatus = status;
+        });
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: _selectedStatus == status

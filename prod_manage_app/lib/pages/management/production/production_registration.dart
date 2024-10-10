@@ -33,7 +33,7 @@ class _ProductionRegistrationPageState
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
       builder: (BuildContext context, Widget? child) {
         return Theme(
@@ -178,9 +178,8 @@ class _ProductionRegistrationPageState
                   SizedBox(height: 16.0),
                   _buildTextFormField(
                     _line2Controller,
-                    'Linha 2 *',
+                    'Linha 2',
                     Icons.line_style,
-                    validator: _notEmptyValidator,
                   ),
                   SizedBox(height: 16.0),
                   _buildTextFormField(

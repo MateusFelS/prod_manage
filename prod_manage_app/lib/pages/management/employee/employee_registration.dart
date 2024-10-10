@@ -85,8 +85,8 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2101),
+      firstDate: DateTime(1990),
+      lastDate: DateTime(2030),
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData.light().copyWith(
@@ -101,9 +101,13 @@ class _RegisterEmployeePageState extends State<RegisterEmployeePage> {
     );
 
     if (pickedDate != null) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
+      if (pickedDate.isAfter(DateTime.now())) {
+        _showSnackBar('A data escolhida não pode ser maior que a data atual');
+      } else {
+        setState(() {
+          _selectedDate = pickedDate;
+        });
+      }
     }
   }
 

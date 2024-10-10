@@ -351,7 +351,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Row(
               children: [
                 Text(
-                  'Selecione um Funcionário:',
+                  'Funcionário:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 SizedBox(width: 16),
@@ -360,7 +360,10 @@ class _ReportsPageState extends State<ReportsPage> {
                   items: _filterEmployees().map((employee) {
                     return DropdownMenuItem<int>(
                       value: employee['id'],
-                      child: Text(employee['name']),
+                      child: Text(
+                        employee['name'],
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (newEmployeeId) {
@@ -381,7 +384,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Row(
               children: [
                 Text(
-                  'Selecione uma operação:',
+                  'Operação:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 SizedBox(width: 16),
@@ -391,7 +394,10 @@ class _ReportsPageState extends State<ReportsPage> {
                       _operationSets.map<DropdownMenuItem<String>>((setName) {
                     return DropdownMenuItem<String>(
                       value: setName,
-                      child: Text(setName),
+                      child: Text(
+                        setName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (newOperationSetId) {
