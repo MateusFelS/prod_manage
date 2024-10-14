@@ -44,6 +44,7 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     try {
       await _apiService.updateStatus(widget.cut['id'], _currentStatus);
       _showSnackBar('Status atualizado com sucesso!');
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       _showSnackBar('Erro ao atualizar o status: $e');
@@ -78,17 +79,17 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
                   SizedBox(height: 20),
                   _buildImage(),
                   SizedBox(height: 20),
-                  _buildDetailRow('Código', widget.cut['code']),
-                  _buildDetailRow('Fornecedor', widget.cut['supplier']),
-                  _buildDetailRow('Linha 1', widget.cut['line1']),
+                  _buildDetailRow('Código:', widget.cut['code']),
+                  _buildDetailRow('Fornecedor:', widget.cut['supplier']),
+                  _buildDetailRow('Linha 1:', widget.cut['line1']),
                   _buildDetailRow(
-                      'Linha 2', widget.cut['line2'] ?? 'Nenhuma linha'),
-                  _buildDetailRow('Comentário',
+                      'Linha 2:', widget.cut['line2'] ?? 'Nenhuma linha'),
+                  _buildCommentRow('Comentário:',
                       widget.cut['comment'] ?? 'Nenhum comentário'),
-                  _buildDetailRow('Quantidade de Peças',
+                  _buildDetailRow('Quantidade de Peças:',
                       widget.cut['pieceAmount'].toString()),
                   _buildDetailRow(
-                      'Data Limite', _formatDate(widget.cut['limiteDate'])),
+                      'Data Limite:', _formatDate(widget.cut['limiteDate'])),
                   SizedBox(height: 10),
                   Text(
                     'Operação:',
@@ -192,6 +193,35 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
     );
   }
 
+  Widget _buildCommentRow(String title, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.brown.shade900,
+            ),
+          ),
+          SizedBox(width: 35),
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: Colors.brown.shade800,
+              ),
+              overflow: TextOverflow.visible,
+              softWrap: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatusSwitch(String status) {
     return Row(
       children: [
@@ -203,7 +233,6 @@ class _ProductionCutDetailsPageState extends State<ProductionCutDetailsPage> {
             if (value != null) {
               setState(() {
                 _currentStatus = value;
-                print('Status selecionado: $_currentStatus');
               });
             }
           },

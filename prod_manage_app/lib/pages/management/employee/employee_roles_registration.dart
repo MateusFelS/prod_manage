@@ -19,15 +19,25 @@ class _EmployeeRoleRegistrationPageState
   @override
   void initState() {
     super.initState();
-    _loadRoles();
+    _fetchRoles();
   }
 
-  void _loadRoles() async {
-    final response = await _apiService.fetchRoles();
+  Future<void> _fetchRoles() async {
+    try {
+      final response = await _apiService.fetchRoles();
 
-    setState(() {
-      _roles = List<Map<String, dynamic>>.from(response);
-    });
+      if (!mounted) return;
+
+      setState(() {
+        _roles = List<Map<String, dynamic>>.from(response);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao buscar funções: $e')),
+        );
+      }
+    }
   }
 
   void _saveRole() async {
@@ -46,6 +56,7 @@ class _EmployeeRoleRegistrationPageState
 
         setState(() {
           _roles.add({"title": title});
+          _fetchRoles();
         });
       } else {
         _showSnackBar('Erro ao adicionar função: ${response.reasonPhrase}');
@@ -67,6 +78,7 @@ class _EmployeeRoleRegistrationPageState
     if (response.statusCode == 200) {
       setState(() {
         _roles.removeAt(index);
+        _fetchRoles();
       });
       _showSnackBar('Função excluída com sucesso!');
     } else {
@@ -166,21 +178,31 @@ class _EmployeeRoleRegistrationPageState
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: _roles.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      _roles[index]['title'],
-                      style: TextStyle(color: Colors.brown.shade900),
+              child: _roles.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Nenhuma função cadastrada!',
+                        style: TextStyle(
+                          color: Colors.brown.shade900,
+                          fontSize: 14,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _roles.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            _roles[index]['title'],
+                            style: TextStyle(color: Colors.brown.shade900),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteRole(index),
+                          ),
+                        );
+                      },
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteRole(index),
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),

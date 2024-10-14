@@ -5,7 +5,7 @@ end
 
 When('the user submits a valid registration form for a new cut') do
   @create_cut = @create.create_cut(DATABASE[:cut][:code], DATABASE[:cut][:pieceAmount], DATABASE[:cut][:line1], DATABASE[:cut][:line2],
-  DATABASE[:cut][:limiteDate], DATABASE[:cut][:comment], DATABASE[:cut][:supplier], DATABASE[:cut][:selectedOperations])
+  DATABASE[:cut][:limiteDate], DATABASE[:cut][:comment], DATABASE[:cut][:supplier])
 end
 
 Then('the system should successfully register the new cut') do
@@ -19,7 +19,7 @@ end
 
 When('the user submits valid updates for an existing cut') do
   @update_cut = @update.update_cut(DATABASE[:cut][:id], DATABASE[:cut][:code], DATABASE[:cut][:pieceAmount], DATABASE[:cut][:line1], DATABASE[:cut][:line2],
-  DATABASE[:cut][:limiteDate], DATABASE[:cut][:comment], DATABASE[:cut][:supplier], DATABASE[:cut][:selectedOperations])
+  DATABASE[:cut][:limiteDate], DATABASE[:cut][:comment], DATABASE[:cut][:supplier])
 end
 
 Then('the system should successfully update the cut records') do

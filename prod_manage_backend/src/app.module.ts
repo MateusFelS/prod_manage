@@ -7,6 +7,7 @@ import { UserModule } from './users/users.module';
 import { RoleModule } from './roles/role.module';
 import { OperationRecordModule } from './operation_record/operation_record.module';
 
+
 @Module({
   imports: [EmployeeModule, RoleModule, CutRecordModule, OperationRecordModule, PerformanceModule, UserModule],
   providers: [PrismaService],

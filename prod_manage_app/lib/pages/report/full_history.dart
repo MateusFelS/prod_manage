@@ -11,7 +11,8 @@ class FullHistoryPage extends StatefulWidget {
 class _FullHistoryPageState extends State<FullHistoryPage> {
   String selectedFilter = 'Funcionários';
   bool showRegisteredOnly = false;
-  late Map<DateTime, int> performances = {};
+  late Map<DateTime, Map<String, int>> employeePerformances =
+      {}; // Mudança aqui
   late Map<DateTime, Map<String, int>> operationPerformances = {};
   final ApiService _apiService = ApiService();
   List<dynamic> employees = [];
@@ -25,7 +26,6 @@ class _FullHistoryPageState extends State<FullHistoryPage> {
   Future<void> loadEmployees() async {
     try {
       employees = await _apiService.fetchEmployees();
-
       loadPerformances();
     } catch (e) {
       print('Erro ao carregar funcionários: $e');
@@ -36,7 +36,7 @@ class _FullHistoryPageState extends State<FullHistoryPage> {
     try {
       List<dynamic> performanceData = await _apiService.fetchPerformanceData();
 
-      performances.clear();
+      employeePerformances.clear();
       operationPerformances.clear();
 
       List<dynamic> filteredEmployees = employees
@@ -49,14 +49,21 @@ class _FullHistoryPageState extends State<FullHistoryPage> {
           if (filteredEmployees
               .any((employee) => employee['id'] == entry['employeeId'])) {
             DateTime date = parseDate(entry['date']);
+            String employeeName = employees
+                .firstWhere((e) => e['id'] == entry['employeeId'])['name'];
             int produced = entry['produced'];
 
             DateTime groupedDate = DateTime(date.year, date.month, date.day);
 
-            if (performances.containsKey(groupedDate)) {
-              performances[groupedDate] = performances[groupedDate]! + produced;
+            if (!employeePerformances.containsKey(groupedDate)) {
+              employeePerformances[groupedDate] = {};
+            }
+
+            if (employeePerformances[groupedDate]!.containsKey(employeeName)) {
+              employeePerformances[groupedDate]![employeeName] =
+                  employeePerformances[groupedDate]![employeeName]! + produced;
             } else {
-              performances[groupedDate] = produced;
+              employeePerformances[groupedDate]![employeeName] = produced;
             }
           }
         }
@@ -172,33 +179,48 @@ class _FullHistoryPageState extends State<FullHistoryPage> {
             Expanded(
               child: ListView.builder(
                 itemCount: selectedFilter == 'Funcionários'
-                    ? performances.length
+                    ? employeePerformances.length
                     : operationPerformances.length,
                 itemBuilder: (context, index) {
                   if (selectedFilter == 'Funcionários') {
-                    final date = performances.keys.toList()[index];
-                    final produced = performances[date]!;
+                    final date = employeePerformances.keys.toList()[index];
+                    final employees = employeePerformances[date]!;
 
                     return Card(
                       elevation: 4,
                       margin: EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(16),
-                        title: Text(
-                          'Data: ${formatDate(date)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                      child: Column(
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.all(16),
+                            title: Text(
+                              'Data: ${formatDate(date)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          'Produzido: $produced peças',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                        leading: Icon(Icons.history, color: Colors.brown),
+                          ...employees.entries.map((employeeEntry) {
+                            final employeeName = employeeEntry.key;
+                            final produced = employeeEntry.value;
+
+                            return ListTile(
+                              title: Text(
+                                'Funcionário: $employeeName',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Produzido: $produced peças',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ],
                       ),
                     );
                   } else {

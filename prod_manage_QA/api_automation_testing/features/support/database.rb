@@ -45,7 +45,6 @@ DATABASE = {
     limiteDate: current_date,
     comment: '',
     supplier: '',
-    selectedOperations: selectedOperations
   },
 
   operation: {

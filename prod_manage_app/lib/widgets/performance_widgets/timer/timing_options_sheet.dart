@@ -16,11 +16,29 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
   int enteredPieceAmount = 0;
   String? errorMessage;
 
+  static const int MAX_UNLIMITED_PIECES = 10000;
+
   @override
   Widget build(BuildContext context) {
     List<dynamic> filteredCutRecords = widget.cutRecords
         .where((record) => record['status'] == 'Em progresso')
         .toList();
+
+    List<DropdownMenuItem<String>> dropdownItems =
+        filteredCutRecords.map((record) {
+      return DropdownMenuItem<String>(
+        value: record['code'],
+        child: Text(record['code']),
+      );
+    }).toList();
+
+    dropdownItems.insert(
+        0,
+        DropdownMenuItem<String>(
+          value: "0000",
+          child: Text("Sem Código Específico"),
+        ));
+
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.only(
@@ -52,19 +70,15 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
                       orElse: () => null,
                     );
 
-                    if (selectedRecord != null) {
-                      pieceAmount = selectedRecord['pieceAmount'];
-                    } else {
-                      pieceAmount = 0;
-                    }
+                    pieceAmount = selectedCut == "0000"
+                        ? MAX_UNLIMITED_PIECES
+                        : (selectedRecord?['pieceAmount'] ?? 0);
+
+                    enteredPieceAmount = 0;
+                    errorMessage = null;
                   });
                 },
-                items: filteredCutRecords.map((record) {
-                  return DropdownMenuItem<String>(
-                    value: record['code'],
-                    child: Text(record['code']),
-                  );
-                }).toList(),
+                items: dropdownItems,
                 decoration: _inputDecoration('Selecione o Código de Corte'),
               ),
               if (filteredCutRecords.isEmpty)
@@ -78,21 +92,25 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
               SizedBox(height: 10),
               TextFormField(
                 keyboardType: TextInputType.number,
-                decoration:
-                    _inputDecoration('Quantidade de Peças (max: $pieceAmount)')
-                        .copyWith(
+                decoration: _inputDecoration(selectedCut == "0000"
+                        ? 'Quantidade de Peças (max: ilimitado)'
+                        : 'Quantidade de Peças (max: $pieceAmount)')
+                    .copyWith(
                   errorText: errorMessage,
                 ),
                 onChanged: (value) {
                   setState(() {
                     enteredPieceAmount = int.tryParse(value) ?? 0;
 
-                    if (enteredPieceAmount < 1 ||
-                        enteredPieceAmount > pieceAmount) {
-                      errorMessage =
-                          'Quantidade deve ser entre 1 e $pieceAmount';
+                    if (selectedCut == "0000") {
+                      errorMessage = enteredPieceAmount < 1
+                          ? 'Quantidade deve ser maior que zero'
+                          : null;
                     } else {
-                      errorMessage = null;
+                      errorMessage = enteredPieceAmount < 1 ||
+                              enteredPieceAmount > pieceAmount
+                          ? 'Quantidade deve ser entre 1 e $pieceAmount'
+                          : null;
                     }
                   });
                 },
@@ -100,9 +118,7 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
               ),
               SizedBox(height: 10),
               ElevatedButton(
-                onPressed: (selectedCut != null &&
-                        enteredPieceAmount > 0 &&
-                        enteredPieceAmount <= pieceAmount)
+                onPressed: _isButtonEnabled()
                     ? () {
                         widget.onStart(selectedCut!, enteredPieceAmount);
                         Navigator.pop(context);
@@ -127,6 +143,18 @@ class _TimingOptionsSheetState extends State<TimingOptionsSheet> {
         ),
       ),
     );
+  }
+
+  bool _isButtonEnabled() {
+    if (selectedCut == null || enteredPieceAmount < 1) {
+      return false;
+    }
+
+    if (selectedCut == "0000") {
+      return enteredPieceAmount > 0;
+    } else {
+      return enteredPieceAmount > 0 && enteredPieceAmount <= pieceAmount;
+    }
   }
 
   InputDecoration _inputDecoration(String label) {

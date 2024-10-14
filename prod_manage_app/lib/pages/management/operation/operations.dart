@@ -37,6 +37,7 @@ class _OperationPageState extends State<OperationPage> {
         _operations = operations;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao buscar operações: $e')),
       );
@@ -55,6 +56,7 @@ class _OperationPageState extends State<OperationPage> {
         await _apiService.saveOperationRecord(data);
         setState(() {
           _operations.add(data);
+          _fetchOperations();
         });
 
         if (!mounted) return;
@@ -80,18 +82,29 @@ class _OperationPageState extends State<OperationPage> {
   }
 
   void _deleteOperation(int index) async {
+    if (_operations[index]['id'] == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: ID da operação é nulo.')),
+      );
+      return;
+    }
+
     final operationId = _operations[index]['id'];
 
     try {
       await _apiService.deleteOperationRecord(operationId);
       setState(() {
         _operations.removeAt(index);
+        _fetchOperations();
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Operação excluída com sucesso!')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao excluir operação: $e')),
       );
@@ -200,7 +213,7 @@ class _OperationPageState extends State<OperationPage> {
         onPressed: _saveRecord,
         child: Text(
           'Salvar',
-          style: TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 18),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown.shade400,
@@ -215,13 +228,6 @@ class _OperationPageState extends State<OperationPage> {
         ),
       ),
     );
-  }
-
-  String _formatElapsedTime(int seconds) {
-    final hours = (seconds ~/ 3600).toString().padLeft(2, '0');
-    final minutes = ((seconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final secs = (seconds % 60).toString().padLeft(2, '0');
-    return "$hours:$minutes:$secs";
   }
 
   Widget _buildTitle(String title) {

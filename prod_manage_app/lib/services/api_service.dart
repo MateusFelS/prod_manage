@@ -176,7 +176,6 @@ class ApiService {
       return {
         'id': operationRecord['id'],
         'operationName': operationRecord['operationName'],
-        'calculatedTime': operationRecord['calculatedTime'],
       } as Map<String, dynamic>;
     }).toList();
   }
