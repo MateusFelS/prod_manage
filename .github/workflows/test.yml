@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: 18
 
+      - name: Change directory to TesteAutomatizado
+        run: cd TesteAutomatizado
+
       - name: Install dependencies
         run: npm install
 
