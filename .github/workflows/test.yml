@@ -21,15 +21,16 @@ jobs:
         with:
           node-version: 18
 
-      - name: Change directory to TesteAutomatizado
-        run: cd TesteAutomatizado
-
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd TesteAutomatizado
+          npm install
 
       - name: Run Playwright tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           MANAGEMENT_TOKEN: ${{ secrets.MANAGEMENT_TOKEN }}
           INVALID_TOKEN: ${{ secrets.INVALID_TOKEN }}
-        run: npx playwright test
+        run: |
+          cd TesteAutomatizado
+          npx playwright test
