@@ -40,7 +40,6 @@ test.describe('API - Registro de Corte', () => {
         });
     
         const data = await post_response.json();
-        console.log('🔍 Resposta da API (Criação):', data);
     
         expect(post_response.status()).toBe(201);
         expect(data.sys).toHaveProperty('id');
