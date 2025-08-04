@@ -19,3 +19,49 @@ Os testes de aceitação manual são realizados para verificar as funcionalidade
 ## Integração Contínua
 
 Os testes estão configurados para serem executados automaticamente sempre que houver uma nova alteração no código, utilizando o **GitHub Actions**. Isso garante que qualquer nova implementação seja testada antes de ser mesclada ao código principal, aumentando a confiança na qualidade do software.
+
+## Como Instalar e Rodar os Testes
+
+### Pré-requisitos
+
+Antes de começar, certifique-se de ter as seguintes ferramentas instaladas em sua máquina:
+
+- [Node.js](https://nodejs.org/) (versão recomendada: 18.x ou superior)  
+- [npm](https://www.npmjs.com/) ou [yarn](https://yarnpkg.com/)  
+- Git (para clonar o repositório)
+
+### Instalação
+
+1. Clone o repositório:
+
+   ```bash
+   git clone https://github.com/seu-usuario/prodmanage-tests.git
+   cd prodmanage-tests
+   ```
+
+2. Instale as dependências:
+
+```bash
+  npm install
+  # ou
+  yarn install
+```
+### Executando os Testes
+
+1. Rodar todos os testes automaticamente:
+
+```bash
+npx playwright test
+```
+
+2. Rodar testes com UI (modo interativo):
+
+```bash
+npx playwright test --ui
+```
+
+3. Abrir o relatório dos testes (após execução):
+
+```bash
+npx playwright show-report
+```
