@@ -41,27 +41,27 @@ Antes de começar, certifique-se de ter as seguintes ferramentas instaladas em s
 
 2. Instale as dependências:
 
-```bash
+   ```bash
   npm install
   # ou
   yarn install
-```
+   ```
 ### Executando os Testes
 
 1. Rodar todos os testes automaticamente:
 
-```bash
-npx playwright test
-```
+   ```bash
+   npx playwright test
+   ```
 
 2. Rodar testes com UI (modo interativo):
 
-```bash
-npx playwright test --ui
-```
+   ```bash
+   npx playwright test --ui
+   ```
 
 3. Abrir o relatório dos testes (após execução):
 
-```bash
-npx playwright show-report
-```
+   ```bash
+   npx playwright show-report
+   ```
