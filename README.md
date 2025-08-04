@@ -41,11 +41,11 @@ Antes de começar, certifique-se de ter as seguintes ferramentas instaladas em s
 
 2. Instale as dependências:
 
-   ```bash
+  ```bash
   npm install
    ou
   yarn install
-   ```
+  ```
 ### Executando os Testes
 
 1. Rodar todos os testes automaticamente:
