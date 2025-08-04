@@ -43,7 +43,7 @@ Antes de começar, certifique-se de ter as seguintes ferramentas instaladas em s
 
    ```bash
   npm install
-  # ou
+   ou
   yarn install
    ```
 ### Executando os Testes
